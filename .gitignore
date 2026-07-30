@@ -1,0 +1,23 @@
+# >>> Code Agent <<< #
+
+# Agent directory
+.claude
+.agents
+.claude.json
+.codex
+
+# Aider chat history & caches
+.aider*
+
+# Cursor / Continue / Roo local state (shared rules are committed separately)
+.cursor/
+.continue/
+.roo/
+
+# Catch-all for local-only files (e.g. *.local.toml, *.local.md)
+*.local*
+
+# CLAUDE.md at root directory
+# This repository uses AGENTS.md (usual agent file).
+# For Claude Code users, you need to create a symlink from AGENTS.md.
+/CLAUDE.md
