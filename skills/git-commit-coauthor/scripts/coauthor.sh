@@ -33,6 +33,7 @@ agent_canonical() {
   case "$a" in
     "claude code") echo "Claude Code" ;;
     "codex")       echo "Codex" ;;
+    "opencode")    echo "OpenCode" ;;
     *)             echo "$1" ;;
   esac
 }
@@ -43,6 +44,7 @@ agent_email() {
   case "$a" in
     "claude code") echo "noreply@anthropic.com" ;;
     "codex")       echo "noreply@openai.com" ;;
+    "opencode")    echo "support@open-code.ai" ;;
     *)             echo "" ;;
   esac
 }
