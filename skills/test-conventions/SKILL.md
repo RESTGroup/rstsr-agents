@@ -6,8 +6,9 @@ description: Shared conventions for rstsr-core tests. Read before authoring any 
 # Test Conventions (rstsr-core)
 
 Reference for every core-test authoring task. The other `core-*` skills point here
-instead of repeating this. See also skill `cargo-inst` for compile/test commands, and
-`rstsr-core/tests/CONTEXT.md` for the glossary.
+instead of repeating this. See also skill `cargo-inst` for compile/test commands,
+`rstsr-core/tests/CONTEXT.md` for the glossary, and `rstsr-book/dev/` for design
+rationale and ADRs (e.g. ADR-0002, the entry-binary test matrix).
 
 ## 1. Folder taxonomy
 
@@ -16,12 +17,13 @@ rstsr-core/tests/
 ├── test_utils/          # TestCfg, assert_equal, specify_test!, tensor_from_nested
 ├── core_func/           # parity tests: mod numpy_<func> (transferred) / mod custom_<func>
 ├── doc_draft/           # doc tests: mod doc_<func> (examples destined for docstrings)
-├── col_major/           # reserved - col-major rstsr-correctness, NOT NumPy parity
+├── col_major/           # (planned) col-major rstsr-correctness, NOT NumPy parity
 ├── test_issues/         # issue regression tests (one file per issue)
 ├── tracking/            # numpy_coverage.csv + numpy_differences.md
-├── entry_row_cpu.rs     # type DeviceType = DeviceCpuSerial; RowMajor
-├── entry_row_faer.rs    # type DeviceType = DeviceFaer;       RowMajor
-└── entry_col_cpu.rs     # #![cfg(feature="col_major")]; CpuSerial
+├── entry_row_cpu.rs     # type DeviceType = DeviceCpuSerial; RowMajor  (wired now)
+├── entry_row_faer.rs    # type DeviceType = DeviceFaer;       RowMajor (planned - see ADR-0002)
+├── entry_col_cpu.rs     # #![cfg(feature="col_major")]; CpuSerial      (planned - see ADR-0002)
+└── tensor_sum.rs        # standalone integration test (not part of the entry matrix)
 ```
 
 - `core_func/` and `doc_draft/` mirror the same category tree (`manuplication/`,
@@ -35,7 +37,8 @@ rstsr-core/tests/
 
 Each `entry_<order>_<device>.rs` is one cargo test binary. It defines `type DeviceType`
 and `static TESTCFG`, then `mod core_func; mod doc_draft; mod test_issues;`. The shared
-body is **not** duplicated - the matrix is formed by binaries. See ADR-0002.
+body is **not** duplicated - the matrix is formed by binaries. See ADR-0002
+(`rstsr-book/dev/adr/adr-0002-entry-binary-test-matrix.mdx`).
 
 ```rust
 // entry_row_cpu.rs
@@ -57,16 +60,20 @@ pub static TESTCFG: LazyLock<TestCfg<DeviceType>> = LazyLock::new(|| {
 });
 ```
 
-- `entry_row_faer.rs` swaps `DeviceFaer as DeviceType`.
-- `entry_col_cpu.rs` starts with `#![cfg(feature = "col_major")]` and `mod col_major;`
+- `entry_row_faer.rs` (planned) swaps `DeviceFaer as DeviceType`.
+- `entry_col_cpu.rs` (planned) starts with `#![cfg(feature = "col_major")]` and `mod col_major;`
   instead of `core_func` (col-major body is separate - it is **not** NumPy parity).
+- Only `entry_row_cpu.rs` is wired in the repo today; `entry_row_faer.rs` /
+  `entry_col_cpu.rs` are part of the ADR-0002 design but not yet present.
 - Gate with `[[test]]` `required-features` in `rstsr-core/Cargo.toml` so row/col
   binaries cannot collide (col_major is compile-time mutually exclusive with
   row_major).
-- **Device scope now:** CpuSerial + Faer only. The structure is future-ready for
-  device crates (OpenBLAS, MKL, ...) which symlink `test_utils/` + `core_func/` +
-  `doc_draft/` and write their own `entry_<device>.rs`. BLAS-backend devices use a
-  *different* testing strategy and are out of scope for `core-*` skills.
+- **Device scope now:** only `DeviceCpuSerial` (row-major) is wired in the repo.
+  `DeviceFaer` and col-major entry binaries are part of the ADR-0002 design but not yet
+  present. The structure is future-ready for device crates (OpenBLAS, MKL, ...) which
+  symlink `test_utils/` + `core_func/` + `doc_draft/` and write their own
+  `entry_<device>.rs`. BLAS-backend devices use a *different* testing strategy and are
+  out of scope for `core-*` skills.
 
 ## 3. `specify_test!` / `TestCfg` (runtime gating)
 
