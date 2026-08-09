@@ -27,7 +27,7 @@ rstsr-core/tests/
 ```
 
 - `core_func/` and `doc_draft/` mirror the same category tree (`manuplication/`,
-  `linalg/`, ...). A function's parity test lives in `core_func/`; its doc test lives
+  `creation_from_tensor/`, `linalg/`, ...). A function's parity test lives in `core_func/`; its doc test lives
   in `doc_draft/`. They are separated files, authored together.
 - **No `.npy` / no `rstsr-test-manifest` in core.** Small tensors use
   `rt::tensor_from_nested!`; other cases pass a Rust `Vec` to `rt::asarray`.
@@ -162,7 +162,8 @@ When you add or change a parity test, update **both** tracking files:
   and `numpy_source_hash` = hash of the NumPy test function source at the pinned
   version).
 - `tracking/numpy_differences.md` - if rstsr diverges (intentional or a bug), add an
-  entry tagged `intentional` / `bug` / `col-major-transfer`.
+  entry tagged `intentional` / `bug` / `col-major-transfer`. When a `bug` divergence is
+  fixed, move its entry to `tracking/numpy_differences_resolved.md`.
 
 A divergence is either a bug (fix it) or an intentional difference (record it). Never
 leave a divergence only in a code comment.
