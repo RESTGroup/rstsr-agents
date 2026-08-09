@@ -5,7 +5,7 @@ description: Rust's cargo instructions for building, testing, API documentation 
 ## Example
 
 ```bash
-RUST_BACKTRACE=1 cargo test --package rstsr-core --test entry_row_cpu --features "backtrace row_major" --no-default-features -- core_func::manuplication::test_reshape::numpy_reshape::regression --exact --nocapture
+RUST_BACKTRACE=1 cargo test --package rstsr-core --test entry_row_cpu --features "backtrace row_major" --no-default-features -- core_func::manipulation::test_reshape::numpy_reshape::regression --exact --nocapture
 ```
 
 ## Testing rules

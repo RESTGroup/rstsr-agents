@@ -26,7 +26,7 @@ rstsr-core/tests/
 └── tensor_sum.rs        # standalone integration test (not part of the entry matrix)
 ```
 
-- `core_func/` and `doc_draft/` mirror the same category tree (`manuplication/`,
+- `core_func/` and `doc_draft/` mirror the same category tree (`manipulation/`,
   `creation_from_tensor/`, `linalg/`, ...). A function's parity test lives in `core_func/`; its doc test lives
   in `doc_draft/`. They are separated files, authored together.
 - **No `.npy` / no `rstsr-test-manifest` in core.** Small tensors use
@@ -98,7 +98,7 @@ mod numpy_transpose {
 }
 ```
 
-`CATEGORY` is a `static &str` per category module (e.g. `manuplication`), `FUNC` per
+`CATEGORY` is a `static &str` per category module (e.g. `manipulation`), `FUNC` per
 test module, `ITEM` per test function (the `specify_test!` argument).
 
 ## 4. Provenance convention (mandatory for transferred tests)
