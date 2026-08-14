@@ -15,10 +15,15 @@ covered by this skill.
 
 ## Model
 
-- Flow: dispatch **Release-plz-PR** workflow (`release-plz-pr.yml`) → it opens a PR
-  with the version bump and changelog → human sets the final version and merges →
-  dispatch **Release-plz** workflow (`release-plz.yml`) → CI publishes all crates to
-  crates.io and tags `rstsr-vX.Y.Z`.
+- Flow (manual bump): human sets the version; agent prepares the release commit
+  (`Update to vX.Y.Z`: workspace `Cargo.toml` versions + root `CHANGELOG.md`) →
+  human approves commit and push → dispatch **Release-plz** workflow
+  (`release-plz.yml`) → CI publishes all crates to crates.io and tags
+  `rstsr-vX.Y.Z`.
+- The `release-plz-pr.yml` workflow (bot version-bump PR) is currently **broken**:
+  repo settings forbid Actions-created PRs (403 "GitHub Actions is not permitted
+  to create or approve pull requests"; observed 2026-06-25 and 2026-08-14). Do
+  not dispatch it unless that setting is re-enabled.
 - The release CI **runs no tests**. Green CI on `master` HEAD (checked in
   pre-flight) is the quality gate; do not add local test runs unless asked.
 - crates.io publishing and git tags are **irreversible**.
@@ -28,7 +33,7 @@ covered by this skill.
 Only on **explicit user instruction in the session**, never assumed from permissions:
 
 - dispatching either workflow (`gh workflow run`),
-- merging or pushing commits to the release PR,
+- merging, or pushing the release commit to `master`,
 - anything touching crates.io, including `cargo yank`.
 
 Free: local reads, `gh run list/watch`, `gh pr list/view`, `cargo semver-checks`,
@@ -63,26 +68,24 @@ Non-zero exit with `--- failure <lint> ---` blocks means breaking changes were
 found. Report findings and a proposed version (patch by default, since plain
 commit titles carry no semver signal); the human decides the final version.
 
-## Release PR
+## Release commit (manual bump)
 
-1. Dispatch (gated): `gh workflow run release-plz-pr.yml -R RESTGroup/rstsr --ref master`,
-   then `gh run watch` and `gh pr list -R RESTGroup/rstsr --state open`.
-2. Review the PR. release-plz proposes a patch bump unless commit titles follow
-   conventional format; check against the semver report before agreeing.
-3. **Changelog entries must be rephrased, never copied from PR titles.** Gather
-   material with `gh pr list -R RESTGroup/rstsr --state merged --limit N` and write
-   entries in the style of `rstsr/CHANGELOG.md`:
-   - heading `## vX.Y.Z -- YYYY-MM-DD`;
-   - freeform category lines (`Bug Fix`, `Enhancement`,
-     `Enhancement (also behavior change)`, `Behavior change`,
-     `API breaking changes`), `- ` items, PR link as `(RESTGroup/rstsr#NN)` when a
-     PR exists, indented prose for elaboration.
-4. Changelog location is a **symlink**: `rstsr/CHANGELOG.md` → `../CHANGELOG.md`,
-   so release-plz's package changelog lands in the root `CHANGELOG.md` directly -
-   there is no second copy to keep in sync. Verify the symlink is intact
-   (`ls -l rstsr/CHANGELOG.md`).
-5. Human sets the final version (edit the PR if the proposed one is wrong) and
-   merges (gated).
+1. Workspace `Cargo.toml`: bump `[workspace.package] version` and the 14 `rstsr*`
+   entries under `[workspace.dependencies]` (replace the exact old version string;
+   **do not touch** cross-repo ffi/tblis reqs like `0.5`/`0.2`).
+2. Root `CHANGELOG.md` (the crate-level `rstsr/CHANGELOG.md` is a symlink to it -
+   verify with `ls -l`): new `## vX.Y.Z -- YYYY-MM-DD` section. **Entries must be
+   rephrased, never copied from PR titles**; gather material with `gh pr list -R
+   RESTGroup/rstsr --state merged --limit N`. Style: freeform category lines
+   (`Bug Fix`, `Enhancement`, `Behavior change`,
+   `API breaking changes (user should not feel that)`), `- ` items, PR link as
+   `(RESTGroup/rstsr#NN)`, indented prose for elaboration. No entries for
+   test-only or meta commits.
+3. Commit subject `Update to vX.Y.Z` (historical shape: exactly `Cargo.toml` +
+   `CHANGELOG.md`; no `Cargo.lock`); push to `master` (gated).
+4. Cross-check: a `release-plz-pr.yml` dispatch log prints `next version is X.Y.Z`
+   per crate (patch by default for plain commit titles) - advisory only, the human
+   sets the real version in step 1.
 
 ## Publish and verify
 
