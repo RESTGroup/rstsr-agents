@@ -24,3 +24,6 @@ tmp*
 # This repository uses AGENTS.md (usual agent file).
 # For Claude Code users, you need to create a symlink from AGENTS.md.
 /CLAUDE.md
+
+# Campaign plans (agent working material, deliberately not tracked)
+/plans/

@@ -24,7 +24,9 @@ RUST_BACKTRACE=1 cargo test --package rstsr-core --test entry_row_cpu --features
   and the `rstsr` facade.
 
 - Testing cases (`--test entry_row_cpu` in example above) depends on the real testing needs.
-  - Doctest: `--doc`.
+  - Doctest (rustdoc examples in `src/` docstrings; runs in CI for `rstsr-core`):
+    `cargo test -p rstsr-core --doc`. Required by skill `api-doc-conventions` §5
+    whenever a docstring example is added or changed.
   - Integration test (in dir `tests`): `--test <test_name>`, where `<test_name>` is the name of the test `.rs` file under `tests` directory.
   - All integration tests: `--tests`.
   - Unittest (in dir `src`): `--lib`.
