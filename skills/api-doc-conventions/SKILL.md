@@ -209,8 +209,10 @@ Rules:
   so explicitly; never leave the topic silent.
 - Known (b) families: `reshape`/`into_shape`/`change_shape`/`reshape_with_args`,
   `asarray` (shape input), `broadcast` and every broadcasting function, creation
-  functions with shape input (`zeros`, `ones`, `full`, `eye`, `arange`+shape, ...),
-  `to_layout`/`to_contig`/`to_prefer`, `into_compatible_shape`.
+  functions with shape input (`zeros`, `ones`, `full`, `eye`, `uninit`,
+  `empty`, ...; note `arange`/`linspace` are always 1-D and order-independent),
+  `to_contig`/`to_prefer` (when the order argument is the device default),
+  `into_compatible_shape`.
 - The **broadcast-rule asymmetry** (row-major aligns shapes from the *last*
   axis, NumPy-style; column-major from the *first* axis, Fortran/Julia-style) is
   documented **once** on the order-semantics page (which also covers what the
