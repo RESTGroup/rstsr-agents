@@ -17,6 +17,9 @@
 # Catch-all for local-only files (e.g. *.local.toml, *.local.md)
 *.local*
 
+# Scratch output / agent session artifacts
+tmp*
+
 # CLAUDE.md at root directory
 # This repository uses AGENTS.md (usual agent file).
 # For Claude Code users, you need to create a symlink from AGENTS.md.

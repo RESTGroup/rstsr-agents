@@ -23,8 +23,11 @@ have their own testing strategy and their own (future) skills.
 
 ### Step 1 - Parity test (in `core_func/<category>/test_<func>.rs`)
 
-1. **Find the NumPy test.** NumPy tests live at `../other-repos/numpy/numpy/_core/tests`
-   or `.../numpy/lib/tests`. Identify the test function(s) covering this function.
+1. **Find the NumPy test.** First locate the pinned NumPy checkout: read the
+   path from the repository root's `AGENTS.local.md` (`Reference checkouts:`
+   entry); if it is not recorded there, ask the user. Then look in
+   `numpy/_core/tests` or `numpy/lib/tests` of that checkout. Identify the test
+   function(s) covering this function.
 2. **Translate** following `test-conventions` §4 (provenance header + commented-Python
    pairing). Module `numpy_<func>`, `FUNC = "numpy_<func>"`.
 3. **If NumPy has no test** for this function, write a `custom_<func>` module with 2-10
@@ -67,6 +70,11 @@ mod numpy_transpose {
 For a list of small cases in one NumPy class (e.g. `TestRegression::test_reshape*`),
 use the compact `// CASE <name> (line N)` sub-header - see `test_reshape.rs`
 `numpy_reshape::regression`.
+
+For error cases, first try the fallible form (`assert!(tensor.transpose_f(-2, -5).is_err())`);
+only if the function has no `_f` variant, catch the panic with
+`std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| ...))` and assert the
+error (see `broadcast_arrays_f` usage in `test_broadcast_shapes.rs`).
 
 ### Step 2 - Doc test (in `doc_draft/<category>/test_<func>.rs`)
 
@@ -143,7 +151,9 @@ Minimized variant style:
 6. **Notes of API accordance** - differences vs NumPy (links to `numpy_differences.md`).
 7. **See Also** - related functions, then variants of this function, then variants of
    associated functions.
-8. **Panics** - only when relevant.
+8. **Panics** - only when relevant. For a function that panics without its `_f`
+   form, an example may use ` ```rust,should_panic `; mention
+   `For a fallible version, use [<func>_f].`.
 
 ## Final checklist
 
