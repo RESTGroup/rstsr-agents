@@ -198,10 +198,10 @@ first `#` section (MUST be this sentence shape):
 
 plus: at least one example per affected mode in `# Examples` or
 `# Elaborated examples` (typically a `## Difference between [RowMajor] and
-[ColMajor]` subsection), and a link to the standalone order-semantics page
-(planned: `rstsr-core/src/docs/order_semantics.md`, wired as a `pub mod` like
-`api_specification`; until it exists, link the elaborated sections of
-[`broadcast`] / [`reshape`]).
+[ColMajor]` subsection), and a link to the standalone order-semantics page:
+`[`order_semantics`](crate::order_semantics)` (source:
+`rstsr-core/src/docs/order_semantics.md`, wired as a `pub mod` like
+`api_specification`).
 
 Rules:
 
@@ -213,9 +213,10 @@ Rules:
   `to_layout`/`to_contig`/`to_prefer`, `into_compatible_shape`.
 - The **broadcast-rule asymmetry** (row-major aligns shapes from the *last*
   axis, NumPy-style; column-major from the *first* axis, Fortran/Julia-style) is
-  documented **once** on the order-semantics page (or, until that exists, in
-  `broadcast`'s detailed-rules section) and linked from every broadcasting
-  function's notice. Do not restate the rule in every docstring.
+  documented **once** on the order-semantics page (which also covers what the
+  default order controls and reshape's iteration invariance) and linked from
+  every broadcasting function's notice. Do not restate the rule in every
+  docstring.
 - `tensor_from_nested!` always produces row-major layout regardless of device
   order - keep documenting that locally (it is a (b) fact about the macro, not
   about the order system).
