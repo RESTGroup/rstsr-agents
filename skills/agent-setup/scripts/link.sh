@@ -64,10 +64,27 @@ if [[ ! -f "$source_dir/AGENTS.md" ]]; then
 fi
 
 # Link target as a relative path from the target dir (keeps pack dirs movable).
-if command -v realpath >/dev/null 2>&1; then
-  rel="$(realpath --relative-to="$target" "$source_dir")"
-else
-  rel="$source_dir"  # absolute fallback (macOS without coreutils)
+# GNU realpath computes it directly; BSD realpath (macOS) has no --relative-to,
+# so fall back to computing it in bash, then to the absolute path.
+relpath() {
+  # relpath FROM TO -> path of TO relative to FROM (both absolute, no trailing /)
+  local -a f t
+  local i n common=0 out=""
+  IFS='/' read -r -a f <<<"${1#/}"
+  IFS='/' read -r -a t <<<"${2#/}"
+  n=$(( ${#f[@]} < ${#t[@]} ? ${#f[@]} : ${#t[@]} ))
+  for ((i = 0; i < n; i++)); do
+    [[ "${f[i]}" == "${t[i]}" ]] || break
+    common=$((common + 1))
+  done
+  for ((i = common; i < ${#f[@]}; i++)); do out+="../"; done
+  local IFS='/'
+  printf '%s' "${out}${t[*]:common}"
+}
+
+if ! rel="$(realpath --relative-to="$target" "$source_dir" 2>/dev/null)"; then
+  rel="$(relpath "$target" "$source_dir")"
+  [[ -n "$rel" ]] || rel="$source_dir"  # identical dirs: absolute fallback
 fi
 
 want_for() {
