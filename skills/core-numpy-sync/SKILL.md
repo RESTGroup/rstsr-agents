@@ -12,8 +12,10 @@ judgment to re-translate. No auto-translation of Python to Rust happens here.
 
 ## Inputs
 
-- Pinned NumPy checkout, at a tagged version, path configurable (commonly
-  `../other-repos/numpy`, checked out at the new tag).
+- Pinned NumPy checkout, at a tagged version. Its location is per-developer:
+  read the `Reference checkouts:` entry in the repository root's
+  `AGENTS.local.md`, or ask the user. (A clone at `../other-repos/numpy` is a
+  common example, not a convention.)
 - `rstsr-core/tests/tracking/numpy_coverage.csv` (the current checklist).
 
 ## Steps
@@ -34,7 +36,7 @@ judgment to re-translate. No auto-translation of Python to Rust happens here.
    (hash of the NumPy test function's source text at the new version) and compare to
    the CSV's stored hash. Changed hash -> the translated rstsr test may be stale; flag
    it for re-review.
-4. **Produce a drift report** (stdout or a temp file under `.claude/scratch/`):
+4. **Produce a drift report** (stdout or a gitignored temp file):
    new / removed / renamed / drifted, with the NumPy diff context. This is the input
    to the human/AI re-translation pass.
 5. **Hand off.** A human or the `core-test` skill then:
@@ -43,7 +45,8 @@ judgment to re-translate. No auto-translation of Python to Rust happens here.
    - decides `not-applicable` vs `todo` for new functions,
    - updates `numpy_differences.md` if a divergence appears or disappears.
 6. **Update the version header** in both tracking files to the new pinned version
-   only after the re-translation pass settles.
+   only after the re-translation pass settles. Record the version and the expected
+   tag **only** - never a local checkout path, which is per-developer (see Inputs).
 
 ## Helpers
 

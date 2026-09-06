@@ -1,6 +1,6 @@
 ---
 name: git-commit-coauthor
-description: Generate the correct git commit Co-authored-by trailers for the AI code agent and model currently in use (Claude Code or Codex with qwen, glm, minimax, deepseek, kimi, claude, or gpt models). Use when preparing or writing a git commit message, staging a commit, or attributing AI-assisted changes. Also enforces the RSTSR commit subject convention (`<crate>: <summary>`).
+description: Generate the correct git commit Co-authored-by trailers for the AI code agent and model currently in use (Claude Code or Codex with qwen, glm, minimax, deepseek, kimi, claude, or gpt models). Use when preparing or writing a git commit message, staging a commit, opening a pull request, or attributing AI-assisted changes. Also enforces the RSTSR commit subject convention (`<crate>: <summary>`) and the RSTSR pull-request template.
 ---
 
 ## When to add co-authors
@@ -57,7 +57,8 @@ Models (match by prefix, case-insensitive):
 Run the script to get the exact trailer block (avoids mis-typing emails):
 
 ```bash
-bash .claude.rstsr/skills/git-commit-coauthor/scripts/coauthor.sh --agent "Codex" --model "glm-5.2"
+# path via the agent symlink (`.claude` or `.agents`, whichever your setup has):
+bash .claude/skills/git-commit-coauthor/scripts/coauthor.sh --agent "Codex" --model "glm-5.2"
 ```
 
 Output (no blank line between co-authors):
@@ -68,3 +69,44 @@ Co-authored-by: glm-5.2 <service@zhipuai.cn>
 ```
 
 Append it after one blank line at the end of the commit message.
+
+## Pull request body template
+
+When opening a PR, fill the template below (remove sections tagged optional; keep
+the trailing attribution block). Do not invent content for optional sections.
+
+```md
+# Summary
+
+<...>
+
+# Changes
+
+## API breaking changes
+
+<... (optional)>
+
+## New features
+
+<... (optional)>
+
+## Feature improvements or changes
+
+<... (optional)>
+
+## Bug fixes
+
+<... (optional)>
+
+# Developer
+
+## Code Style Update
+
+<... (optional)>
+
+---
+
+PR summarized by
+- Agent: <Agent Name>
+- Model: <Model Name>
+```
