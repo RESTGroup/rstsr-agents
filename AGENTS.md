@@ -24,8 +24,8 @@ Reference checkouts (NumPy/SciPy/array-api clones used by the test skills) live 
 ## Developer resources
 
 - **Setup** (new checkout or broken/dangling links): skill `agent-setup` bootstraps the `.claude` / `.agents` / `CLAUDE.md` / `AGENTS.md` symlinks - run `skills/agent-setup/scripts/link.sh` of this repository (auto-detects the sibling checkout; see its SKILL.md and this repository's README.md).
-- **Skills** (operational how-to): see `skills/` of this repository, reached from any repo through your `.claude` (Claude Code) or `.agents` symlink - notably `cargo-inst` (build/test commands), `test-conventions` + `core-test` (rstsr-core test authoring), `git-commit-coauthor` (commit and PR conventions).
-- **Rules** (reference material): `rules/code-concepts.md` - core types and naming conventions.
+- **Skills** (operational how-to): see `skills/` of this repository, reached from any repo through your `.claude` (Claude Code) or `.agents` symlink - notably `cargo-inst` (build/test commands), `test-conventions` + `core-test` (rstsr-core test authoring), `api-doc-conventions` (rstsr-core docstring policy router), `git-commit-coauthor` (commit and PR conventions).
+- **Rules** (reference material): `rules/code-concepts.md` - core types and naming conventions; `rules/api-doc-conventions.md` - router to skill `api-doc-conventions`, the rstsr-core docstring policy (terminology in `CONTEXT.md` at this repository's root).
 - **Dev docs & ADRs** (design rationale, the "why"): `rstsr-book/dev/` (online: https://restgroup.github.io/rstsr-book/) - e.g. ADR-0002 (entry-binary test matrix).
 
 ## Notices to human developers

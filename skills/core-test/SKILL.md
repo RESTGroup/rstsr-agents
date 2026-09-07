@@ -111,54 +111,33 @@ mod doc_transpose {
 }
 ```
 
-### Step 3 - API documentation (the docstring, on the *core function*)
+### Step 3 - API documentation (the docstring, on the *anchor function*)
 
-#### Core vs variant functions
+**Follow skill `api-doc-conventions`** (this repository) - it *is* the
+normative policy (tiers, anchor vs variants, canonical section order, row/col
+notices, doctest rules, overloads, API accordance, micro-style). Terminology in
+`CONTEXT.md` at the repository root. Reference exemplars: `transpose.rs`,
+`reshape.rs`, `asarray.rs` in `rstsr-core/src/tensor/`.
 
-- **Core function** = the panic version that returns a view, e.g. `transpose`.
-  Fully document it.
-- **Variant functions** = `transpose_f` (fallible), `into_transpose` (ownership-token,
-  panic), `into_transpose_f`, `TensorAny::t()`, `permute_dims` (alias). Give them
-  minimized docs - same title as the core function plus `See also [<core_func>]`.
-- Exception: `reshape` is fully documented alongside its core form.
+Workflow essentials (details in the policy):
 
-Minimized variant style:
-```rust
-/// Permutes the axes (dimensions) of an array.
-///
-/// See also [`transpose`].
-```
-
-#### Core-function docstring sections (in order)
-
-1. **Title** - reuse NumPy/SciPy/array-api's if one exists; else write your own.
-2. **Explanation** - only if necessary.
-3. **Row/column-major warning** - only for functions whose behavior differs by
-   default order (`reshape`, `asarray`, broadcasting). Use:
-   ```rust
-   /// <div class="warning">
-   ///
-   /// **Row/Column Major Notice**
-   ///
-   /// This function behaves differently on default orders ([`RowMajor`] and [`ColMajor`]).
-   ///
-   /// </div>
-   ```
-   Add a subsection + example for the differing behavior (returns you to Step 2).
-4. **Parameters** / **Returns** - document overloads and ownership notes for
-   `into_*` variants (they take ownership, change layout only, not data).
-5. **Examples** - **must follow the doc test** from Step 2.
-6. **Notes of API accordance** - differences vs NumPy (links to `numpy_differences.md`).
-7. **See Also** - related functions, then variants of this function, then variants of
-   associated functions.
-8. **Panics** - only when relevant. For a function that panics without its `_f`
-   form, an example may use ` ```rust,should_panic `; mention
-   `For a fallible version, use [<func>_f].`.
+- **Anchor function** = the panic version that returns a view, e.g. `transpose`.
+  Fully document it; **variants** (`_f`, `into_*`, `TensorAny::` methods) and
+  aliases get minimized docs (`See also [<anchor>]`).
+- The docstring's **examples must come from the Step 2 doc test**: copy from the
+  run, keep shown output byte-identical, add hidden `#` setup lines.
+- Every function gets a **row/col-major notice** - warning div + per-mode
+  examples when behavior differs, the standard one-liner when identical.
+- Record NumPy differences inline in `# Notes of API accordance` **and** in
+  `tracking/numpy_differences.md` (tagged `intentional` / `bug`).
 
 ## Final checklist
 
 - [ ] Parity test passes on `entry_row_cpu` and `entry_row_faer`.
 - [ ] Provenance header byte-matches a `numpy_coverage.csv` row.
-- [ ] Doc test output pasted from actual run, not invented.
+- [ ] Doc test output pasted from actual run, not invented; output-string
+      assertion added to the `doc_draft` twin for displayed output.
+- [ ] `cargo test -p rstsr-core --doc` green (docstring examples compile and pass).
+- [ ] Docstring complies with skill `api-doc-conventions`.
 - [ ] `numpy_coverage.csv` row added/refreshed (incl. `numpy_source_hash`).
 - [ ] Any divergence recorded in `numpy_differences.md` (tagged).
