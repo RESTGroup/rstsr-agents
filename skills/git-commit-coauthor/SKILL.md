@@ -1,6 +1,6 @@
 ---
 name: git-commit-coauthor
-description: Generate the correct git commit Co-authored-by trailers for the AI code agent and model currently in use (Claude Code or Codex with qwen, glm, minimax, deepseek, kimi, claude, or gpt models). Use when preparing or writing a git commit message, staging a commit, opening a pull request, or attributing AI-assisted changes. Also enforces the RSTSR commit subject convention (`<crate>: <summary>`) and the RSTSR pull-request template.
+description: Generate the correct git commit Co-authored-by trailers for the AI code agent and model currently in use (Claude Code, Codex, OpenCode, or ZCode with qwen, glm, minimax, deepseek, kimi, claude, or gpt models). Use when preparing or writing a git commit message, staging a commit, opening a pull request, or attributing AI-assisted changes. Also enforces the RSTSR commit subject convention (`<crate>: <summary>`) and the RSTSR pull-request template.
 ---
 
 ## When to add co-authors
@@ -24,10 +24,11 @@ Co-authored-by: Model Name <Model Email>
 
 ## Resolve agent and model
 
-1. Identify the agent: `Claude Code` or `Codex` or `OpenCode` (whichever is running this skill).
+1. Identify the agent: `Claude Code` or `Codex` or `OpenCode` or `ZCode` (whichever is running this skill).
 2. Identify the current model **with version**, e.g. `glm-5.2`, `qwen3.5-plus`:
    - Claude Code: from the `/model` property.
    - Codex: from `model` in `~/.codex/config.toml`, or the session's active model.
+   - ZCode: from the session's active model.
 3. Resolve emails from the registry below. **Do not guess an email.** If the agent or model is not listed, ask the user explicitly.
 
 ## Registry
@@ -40,6 +41,7 @@ Agents:
 | Claude Code | noreply@anthropic.com |
 | Codex | noreply@openai.com |
 | OpenCode | support@open-code.ai |
+| ZCode | service@zhipuai.cn |
 
 Models (match by prefix, case-insensitive):
 | Family | Example | Email |
