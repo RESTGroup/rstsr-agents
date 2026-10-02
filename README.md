@@ -25,6 +25,7 @@ rstsr-agents/
     ├── core-numpy-sync/       #   NumPy test-surface drift detection
     ├── core-col-major-transfer/ # (stub, deferred)
     ├── crate-publish/         #   rstsr release via release-plz
+    ├── update-ffi-blas/       #   rstsr-ffi binding updates (references/lapack.md + checker)
     └── git-commit-coauthor/   #   commit trailers + PR template (+ coauthor.sh)
 ```
 
