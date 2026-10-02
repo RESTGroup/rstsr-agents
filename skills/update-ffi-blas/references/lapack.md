@@ -6,12 +6,12 @@ checkout generates all five modules of the crate: `blas`, `cblas`, `lapack`,
 
 ## Upstream checkout
 
-Per-developer, read-only. Read the `Reference checkouts:` entry of the
-repo-root `AGENTS.local.md` (or `CLAUDE.local.md`); if absent, ask the human to
-add the LAPACK clone there (e.g. `Reference checkouts: ~/Git-Others`, with a
-`lapack` clone inside). Pass it to the generator as `RSTSR_LAPACK_REPO=<path>`
-(the script defaults to `~/Git-Others/lapack`); never write a local path into
-tracked files.
+Per-developer, read-only. Find it in the repo-root `AGENTS.local.md` /
+`CLAUDE.local.md` - a `Resources and Directories` entry (e.g. `Netlib LAPACK
+source checkout: ~/Git-Others/lapack`) or a `Reference checkouts:` line. If
+absent, ask the human to add the LAPACK clone. Pass it to the generator as
+`RSTSR_LAPACK_REPO=<path>` (the script defaults to `~/Git-Others/lapack`);
+never write a local path into tracked files.
 
 Target the newest **release tag**: `git fetch --tags`,
 `git tag --sort=-v:refname | head -1`, then `git checkout <tag>` (detached HEAD
