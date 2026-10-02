@@ -12,7 +12,7 @@ instead of per-repo copies that drift).
 ```
 rstsr-agents/
 ├── AGENTS.md                  # shared instruction entry (read first by agents)
-├── README.md                  # this file (human-facing setup, not for agents)
+├── README.md                  # this file (human-facing setup; also the skills index)
 ├── settings.json              # committed Claude Code baseline (permissions)
 ├── rules/                     # reference material agents read on demand
 │   └── code-concepts.md       #   rstsr-core types & naming conventions
@@ -26,7 +26,8 @@ rstsr-agents/
     ├── core-col-major-transfer/ # (stub, deferred)
     ├── crate-publish/         #   rstsr release via release-plz
     ├── update-ffi-blas/       #   rstsr-ffi binding updates (references/lapack.md + checker)
-    └── git-commit-coauthor/   #   commit trailers + PR template (+ coauthor.sh)
+    ├── git-commit-coauthor/   #   commit trailers + attribution (+ coauthor.sh)
+    └── pr-writeup/            #   PR title and two-part body (changes + details)
 ```
 
 ## How agents consume this repository
@@ -129,8 +130,9 @@ Anything else personal (notes, scratch configs) follows the same rule: suffix
    description: <one line; this is all other sessions see when deciding to load it>
    ---
    ```
-2. Keep skills single-purpose and reference each other (`test-conventions` is the
-   shared reference for the `core-*` skills) instead of duplicating.
+2. Add its line to the skills tree under "Repository layout". Keep skills
+   single-purpose and reference each other (`test-conventions` is the shared
+   reference for the `core-*` skills) instead of duplicating.
 3. If the skill ships a script that encodes a registry (e.g. `coauthor.sh`), keep
    the SKILL.md table in sync with the script - the script is authoritative.
 

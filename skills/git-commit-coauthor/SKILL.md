@@ -1,6 +1,6 @@
 ---
 name: git-commit-coauthor
-description: Generate the correct git commit Co-authored-by trailers for the AI code agent and model currently in use (Claude Code, Codex, OpenCode, or ZCode with qwen, glm, minimax, deepseek, kimi, claude, or gpt models). Use when preparing or writing a git commit message, staging a commit, opening a pull request, or attributing AI-assisted changes. Also enforces the RSTSR commit subject convention (`<crate>: <summary>`) and the RSTSR pull-request template.
+description: Generate the correct git commit Co-authored-by trailers for the AI code agent and model currently in use (Claude Code, Codex, OpenCode, or ZCode with qwen, glm, minimax, deepseek, kimi, claude, or gpt models). Use when preparing or writing a git commit message, staging a commit, opening a pull request, or attributing AI-assisted changes. Also enforces the RSTSR commit subject convention (`<crate>: <summary>`); PR titles and bodies follow skill `pr-writeup`.
 ---
 
 ## When to add co-authors
@@ -72,40 +72,13 @@ Co-authored-by: glm-5.2 <service@zhipuai.cn>
 
 Append it after one blank line at the end of the commit message.
 
-## Pull request body template
+## Pull requests
 
-When opening a PR, fill the template below (remove sections tagged optional; keep
-the trailing attribution block). Do not invent content for optional sections.
+PR title and body conventions live in skill `pr-writeup`. End the PR body with
+the attribution block below (agent and model resolved as above): the canonical
+footer, rather than a vendor `Generated with ...` footer.
 
 ```md
-# Summary
-
-<...>
-
-# Changes
-
-## API breaking changes
-
-<... (optional)>
-
-## New features
-
-<... (optional)>
-
-## Feature improvements or changes
-
-<... (optional)>
-
-## Bug fixes
-
-<... (optional)>
-
-# Developer
-
-## Code Style Update
-
-<... (optional)>
-
 ---
 
 PR summarized by
