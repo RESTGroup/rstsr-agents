@@ -9,7 +9,11 @@ Checks:
   1. every function declared in the vendored headers of each module has a
      binding in `src/<module>/ffi_extern.rs` (and no stale binding remains);
   2. the four dyload files of each module carry exactly the same function set;
-  3. with `--upstream`, the vendored `header/` files match the upstream
+  3. the generated code uses the feature-dependent `lapack_int` / `blas_int`
+     aliases from `rstsr-cblas-base` rather than local definitions or
+     hard-coded integers (a silent generator no-op otherwise disables
+     `ilp64` / `lp64_as_int`);
+  4. with `--upstream`, the vendored `header/` files match the upstream
      CBLAS/LAPACKE include directories byte-for-byte (the two
      `*_mangling_with_flags.h.in` files are vendored under their final name).
 
@@ -40,6 +44,28 @@ MANGLE_RENAME = {
     "cblas_mangling_with_flags.h.in": "cblas_mangling.h",
     "lapacke_mangling_with_flags.h.in": "lapacke_mangling.h",
 }
+
+# local definitions of these names shadow the glob-imported aliases from
+# rstsr-cblas-base and silently disable the ilp64 / lp64_as_int features
+LOCAL_ALIAS = re.compile(r"pub type\s+(lapack_int|blas_int|F77_INT|CBLAS_INT)\s*=")
+LOCAL_CBLAS_ENUM = re.compile(r"pub (enum|struct|type)\s+CBLAS_(LAYOUT|TRANSPOSE|UPLO|DIAG|SIDE|ORDER)\b")
+
+# module -> (alias, minimum uses in ffi_extern.rs); hard-coded integers
+# instead of the alias drive the count far below these floors
+ALIAS_USAGE = {
+    "blas": ("blas_int", 100),
+    "cblas": ("blas_int", 100),
+    "lapack": ("lapack_int", 1000),
+    "lapacke": ("lapack_int", 1000),
+    "lapacke_utils": ("lapack_int", 100),
+}
+
+# LAPACKE constants the generator retypes: matrix layout is always c_int,
+# error codes follow lapack_int
+LAPACKE_BASE_CONSTANTS = (
+    "pub const LAPACK_ROW_MAJOR: c_int",
+    "pub const LAPACK_WORK_MEMORY_ERROR: lapack_int",
+)
 
 
 def strip_comments(text):
@@ -116,6 +142,31 @@ def check_module(repo, module):
     return problems
 
 
+def check_type_plumbing(repo):
+    problems = []
+    base_dir = os.path.join(repo, "rstsr-lapack-ffi", "src")
+    for module in MODULES:
+        base = open(os.path.join(base_dir, module, "ffi_base.rs")).read()
+        for match in LOCAL_ALIAS.finditer(base):
+            problems.append(f"{module}: ffi_base.rs defines a local {match.group(1)} alias "
+                            f"(must come from rstsr-cblas-base, or ilp64/lp64_as_int are ignored)")
+        for match in LOCAL_CBLAS_ENUM.finditer(base):
+            problems.append(f"{module}: ffi_base.rs defines a local {match.group(0)!r} "
+                            f"(must come from rstsr-cblas-base)")
+    for module, (alias, minimum) in ALIAS_USAGE.items():
+        text = open(os.path.join(base_dir, module, "ffi_extern.rs")).read()
+        uses = len(re.findall(rf"\b{alias}\b", text))
+        if uses < minimum:
+            problems.append(f"{module}: only {uses} uses of {alias} in ffi_extern.rs "
+                            f"(expected >= {minimum}) - signatures may hard-code integers")
+    lapacke_base = open(os.path.join(base_dir, "lapacke", "ffi_base.rs")).read()
+    for needle in LAPACKE_BASE_CONSTANTS:
+        if needle not in lapacke_base:
+            problems.append(f"lapacke: ffi_base.rs is missing {needle!r} (generator retype missed?)")
+    print("  type plumbing: " + ("OK" if not problems else "FAIL"))
+    return problems
+
+
 def check_header_parity(repo, upstream):
     problems = []
     vendored_dir = os.path.join(repo, "rstsr-lapack-ffi", "header")
@@ -145,6 +196,8 @@ def main():
     print("binding coverage (vendored header -> src/<module>/ffi_extern.rs):")
     for module in MODULES:
         problems += check_module(args.repo, module)
+    print("type plumbing (feature-dependent aliases must come from rstsr-cblas-base):")
+    problems += check_type_plumbing(args.repo)
     if args.upstream:
         print(f"header parity (vendored header/ vs {args.upstream}):")
         problems += check_header_parity(args.repo, args.upstream)

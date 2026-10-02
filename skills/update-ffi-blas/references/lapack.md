@@ -53,10 +53,12 @@ python3 <rstsr-agents>/skills/update-ffi-blas/scripts/check_lapack_bindings.py \
 
 It verifies per module that every symbol declared in the vendored headers is
 bound (and nothing is stale), that the four dyload files carry the same
-function set as `ffi_extern.rs`, and that every vendored header is
-byte-identical to the checkout. Run it **while the checkout is still at the
-chosen tag** - against a different revision the parity check will (correctly)
-report the upstream drift.
+function set as `ffi_extern.rs`, that the generated code uses the
+feature-dependent `lapack_int` / `blas_int` aliases from `rstsr-cblas-base`
+(no local alias definitions, no hard-coded integers, LAPACKE constants
+retyped), and that every vendored header is byte-identical to the checkout.
+Run it **while the checkout is still at the chosen tag** - against a different
+revision the parity check will (correctly) report the upstream drift.
 
 ## Verification
 
@@ -80,14 +82,15 @@ treat only new failures as regressions.
 
 ## Pitfalls
 
-- **Silent no-op replacements.** `perform_bindgen.py` rewrites header text by
-  exact string match (`#define F77_INT int32_t`, `#define CBLAS_INT int32_t`,
-  `#define lapack_int        int32_t` - literal spacing - and removes the
-  `*_FORTRAN_STRLEN_END` defines). Upstream reformatting can make one stop
-  matching silently. After regenerating, confirm `src/*/ffi_base.rs` contains
-  no `pub type lapack_int` / `pub type blas_int` definitions: those aliases
-  must come from `rstsr-cblas-base` so the `ilp64` / `lp64_as_int` features
-  keep working.
+- **Text-patch pipeline.** `perform_bindgen.py` rewrites headers and bindgen
+  output by targeted text patches (the `*_INT` type defines, the
+  `*_FORTRAN_STRLEN_END` defines, the include redirects, the alias removals,
+  the LAPACKE constant retypes). Patches that must fire assert that they did,
+  so an upstream reformat fails the run loudly instead of silently emitting
+  wrong bindings; if an assert fires, update the pattern in the generator -
+  never skip the patch. The checker independently verifies the
+  feature-dependent aliases (`lapack_int` / `blas_int`) actually flow into the
+  generated signatures.
 - **Bindgen version stamps.** Each `ffi_base.rs` records the bindgen version
   used; report the version in the hand-off. Changing it without a binding
   change is at most a patch-level concern - the openblas crate kept such a

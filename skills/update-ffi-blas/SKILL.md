@@ -33,7 +33,7 @@ pitfalls differ per distribution and live in a per-library reference:
 4. **Regenerate** with the crate's generator (command in the reference).
    Completion: exit 0; `git status` shows only the paths the reference
    expects (generator scratch is gitignored).
-5. **Review the API delta - the gate.** Run the crate's coverage checker
+5. **Review the API delta - the gate.** Run the crate's binding checker
    (reference) and classify **every** hunk of `git diff` as upstream-caused
    (correct) or generator artifact (a bug - fix the generator, never the
    generated file). A missing or renamed symbol still compiles, so the
