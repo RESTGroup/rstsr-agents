@@ -27,3 +27,7 @@ tmp*
 
 # Campaign plans (agent working material, deliberately not tracked)
 /plans/
+
+# Memory files (related to user's personal perferences)
+/memory/
+
