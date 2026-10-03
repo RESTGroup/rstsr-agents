@@ -20,6 +20,7 @@ rstsr-agents/
     ├── agent-setup/           #   bootstrap the symlinks (scripts/link.sh) - see "Setup"
     ├── cargo-inst/            #   build / test / doc / fmt / clippy commands
     ├── test-conventions/      #   rstsr-core test conventions (read before core-test)
+    ├── prelude-conventions/   #   how items reach the prelude / rt:: (member-crate wiring, deviations)
     ├── core-test/             #   author parity test + doc test + docstring
     ├── core-issue-regression/ #   regression test for a reported issue
     ├── core-numpy-sync/       #   NumPy test-surface drift detection
