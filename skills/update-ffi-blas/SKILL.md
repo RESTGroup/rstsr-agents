@@ -1,6 +1,6 @@
 ---
 name: update-ffi-blas
-description: Update an rstsr-ffi binding crate from a newer upstream BLAS/LAPACK release - update the checkout, check out the release tag, vendor headers, regenerate the bindgen output, verify coverage, record provenance. Read references/lapack.md for rstsr-lapack-ffi and references/openblas.md for rstsr-openblas-ffi; the other distributions have no reference yet. Use when asked to update, regenerate, or version-bump an rstsr-ffi binding crate.
+description: Update an rstsr-ffi binding crate from a newer upstream BLAS/LAPACK release - update the upstream, pin the revision, vendor headers, regenerate the bindgen output, verify coverage, record provenance. Read references/lapack.md for rstsr-lapack-ffi, references/openblas.md for rstsr-openblas-ffi and references/mkl.md for rstsr-mkl-ffi; the other distributions have no reference yet. Use when asked to update, regenerate, or version-bump an rstsr-ffi binding crate.
 ---
 
 # update-ffi-blas: regenerate rstsr-ffi bindings
@@ -13,7 +13,8 @@ pitfalls differ per distribution and live in a per-library reference:
 |---|---|
 | `rstsr-lapack-ffi` | `references/lapack.md` |
 | `rstsr-openblas-ffi` | `references/openblas.md` |
-| `rstsr-mkl-ffi`, `rstsr-blis-ffi`, `rstsr-aocl-ffi`, `rstsr-kml-ffi` | not written yet - stop and say so |
+| `rstsr-mkl-ffi` | `references/mkl.md` |
+| `rstsr-blis-ffi`, `rstsr-aocl-ffi`, `rstsr-kml-ffi` | not written yet - stop and say so |
 | `rstsr-cblas-base` | enum base crate, not bindgen-able; no procedure |
 
 ## Procedure
@@ -22,12 +23,14 @@ pitfalls differ per distribution and live in a per-library reference:
    It names the upstream checkout, the generator, the checker, and the
    verification commands. Completion: you know which upstream library and
    which crate files the run will touch.
-2. **Update the checkout, then pin the revision.** In the per-developer
-   checkout, `git pull` the current branch so the clone is current, then
-   `git fetch --tags`. Target the newest release *tag* - never a branch tip:
-   pick it (`git tag --sort=-v:refname | head -1`) and `git checkout <tag>`
-   (detached HEAD is fine). Completion: `git describe --tags` prints the
-   chosen tag, `git status -s` is clean, commit hash + date recorded.
+2. **Update the upstream, then pin the revision.** Source checkout: `git pull`
+   so the clone is current, `git fetch --tags`, then check out the newest
+   release *tag* - never a branch tip (`git tag --sort=-v:refname | head -1`;
+   detached HEAD is fine). Binary distribution (MKL): the reference names the
+   installer step instead, and the "revision" is the installed version.
+   Completion: the pinned revision is identified - `git describe --tags` prints
+   the chosen tag, `git status -s` is clean, commit hash + date recorded - or,
+   for a binary distribution, the installed version and its path are recorded.
 3. **Pre-flight the rstsr-ffi working tree.** `git status` clean: regeneration
    rewrites tracked files in place, and a dirty tree makes the API diff
    unreviewable. Completion: clean tree, or only changes belonging to this
