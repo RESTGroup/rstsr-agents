@@ -1,18 +1,25 @@
 ---
 name: pr-writeup
-description: Write RSTSR pull-request titles and bodies in the house style - a changelog-ready "Changes" part (category bullets, no PR ids) plus a short "Details" part. Use when opening or editing a PR, drafting a PR description, or preparing a branch for review with gh.
+description: Write RSTSR pull-request titles and bodies in the house style - a changelog-ready "Changes" part (category bullets, no PR ids) plus a short "Details" part - and open the PR from the developer's fork remote (per-developer; recorded in AGENTS.local.md), never `origin`. Use when opening or editing a PR, drafting a PR description, or preparing a branch for review with gh.
 ---
 
 # PR writeup
 
 ## Workflow
 
-1. Read the branch as a whole — `git log --oneline <base>..HEAD` and
+1. Push the branch to the developer's **fork remote** - never `origin`:
+   `git push -u <fork> <branch>`. The fork name is per-developer (record
+   yours in `AGENTS.local.md`; e.g. `ajz34` on the maintainer's machine); if
+   the remote is missing, `git remote add <fork> git@github.com:<you>/<repo>.git`
+   once.
+2. Read the branch as a whole — `git log --oneline <base>..HEAD` and
    `git diff --stat <base>...HEAD` — and write from the diff, not from memory.
-2. Draft the title and the two body parts below.
-3. Create or edit the PR with a body file: `gh pr create --title "<title>" --body-file -`
-   with a heredoc (or a scratch file you do not commit); later updates via
-   `gh pr edit --body-file -`.
+3. Draft the title and the two body parts below.
+4. Create or edit the PR against the upstream repository, naming the fork as
+   the head when it differs from the base repo:
+   `gh pr create --repo <upstream-owner>/<repo> --head <fork-owner>:<branch>
+   --title "<title>" --body-file -` with a heredoc (or a scratch file you do
+   not commit); later updates via `gh pr edit --body-file -`.
 
 ## Title
 
