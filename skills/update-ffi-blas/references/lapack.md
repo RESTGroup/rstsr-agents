@@ -13,11 +13,11 @@ absent, ask the human to add the LAPACK clone. Pass it to the generator as
 `RSTSR_LAPACK_REPO=<path>` (the script defaults to `~/Git-Others/lapack`);
 never write a local path into tracked files.
 
-Target the newest **release tag**: `git fetch --tags`,
-`git tag --sort=-v:refname | head -1`, then `git checkout <tag>` (detached HEAD
-is fine). Upstream `master` runs far ahead of the newest tag and is not a
-binding target — bind release tags only. The crate readme's "Current FFI
-version" line is the canonical record of what the bindings currently track
+Keep the clone current (`git pull`, `git fetch --tags`) and target the newest
+**release tag**: `git tag --sort=-v:refname | head -1`, then `git checkout <tag>`
+(detached HEAD is fine). Upstream `master` runs far ahead of the newest tag and
+is not a binding target — bind release tags only. The crate readme's "Current
+FFI version" line is the canonical record of what the bindings currently track
 (v3.12.1 as of 2026-10-02; releases are rare).
 
 ## Generator
