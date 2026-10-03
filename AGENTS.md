@@ -8,6 +8,7 @@ This file is shared across the rstsr repositories by symlink to the `rstsr-agent
 
 - `rstsr` - the core workspace: `rstsr-core` (tensor types, storage, device traits, naive and faer reference devices), `rstsr-common` (errors, dimension types), `rstsr-dtype-traits`, `rstsr-blas-traits`, `rstsr-linalg-traits`, `rstsr-sci-traits`, `rstsr-native-impl` (rayon reference impl), `crates-device/` (OpenBLAS, MKL, BLIS, AOCL, KML backends), `crates-plugin/rstsr-tblis` (einsum plugin).
 - `rstsr-ffi` (sibling repo) - FFI bindings to C BLAS/LAPACK libraries (`rstsr-openblas-ffi`, `rstsr-mkl-ffi`, `rstsr-lapack-ffi`, ...).
+- `dlpack-ffi` (sibling repo) - standalone DLPack (dmlc/dlpack) FFI bindings: a types-only crate generated from its vendored `header/dlpack.h` by `scripts/bindgen.py` (hand-written additions: the test suite), kept free of references to the other repos here. Updated via skill `update-ffi-dlpack`.
 - `rstsr-book` (sibling repo) - documentation project; developer docs and ADRs under `rstsr-book/dev/` (online: https://restgroup.github.io/rstsr-book/).
 - `rstsr-agents` (sibling repo) - this repository: shared agent instructions, skills, and rules.
 

@@ -26,6 +26,7 @@ rstsr-agents/
     ├── core-col-major-transfer/ # (stub, deferred)
     ├── crate-publish/         #   rstsr release via release-plz
     ├── update-ffi-blas/       #   rstsr-ffi binding updates (references/lapack.md, openblas.md, mkl.md, aocl.md + checker)
+    ├── update-ffi-dlpack/     #   dlpack-ffi binding updates (checker script; check/update modes)
     ├── git-commit-coauthor/   #   commit trailers + attribution (+ coauthor.sh)
     └── pr-writeup/            #   PR title and two-part body (changes + details)
 ```
