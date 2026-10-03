@@ -1,6 +1,6 @@
 ---
 name: update-ffi-blas
-description: Update an rstsr-ffi binding crate from a newer upstream BLAS/LAPACK release - update the upstream, pin the revision, vendor headers, regenerate the bindgen output, verify coverage, record provenance. Read references/lapack.md for rstsr-lapack-ffi, references/openblas.md for rstsr-openblas-ffi and references/mkl.md for rstsr-mkl-ffi; the other distributions have no reference yet. Use when asked to update, regenerate, or version-bump an rstsr-ffi binding crate.
+description: Update an rstsr-ffi binding crate from a newer upstream BLAS/LAPACK release - update the upstream, pin the revision, vendor headers, regenerate the bindgen output, verify coverage, record provenance. Read references/lapack.md for rstsr-lapack-ffi, references/openblas.md for rstsr-openblas-ffi, references/mkl.md for rstsr-mkl-ffi and references/aocl.md for rstsr-aocl-ffi; the other distributions have no reference yet. Use when asked to update, regenerate, or version-bump an rstsr-ffi binding crate.
 ---
 
 # update-ffi-blas: regenerate rstsr-ffi bindings
@@ -14,7 +14,8 @@ pitfalls differ per distribution and live in a per-library reference:
 | `rstsr-lapack-ffi` | `references/lapack.md` |
 | `rstsr-openblas-ffi` | `references/openblas.md` |
 | `rstsr-mkl-ffi` | `references/mkl.md` |
-| `rstsr-blis-ffi`, `rstsr-aocl-ffi`, `rstsr-kml-ffi` | not written yet - stop and say so |
+| `rstsr-aocl-ffi` | `references/aocl.md` |
+| `rstsr-blis-ffi`, `rstsr-kml-ffi` | not written yet - stop and say so |
 | `rstsr-cblas-base` | enum base crate, not bindgen-able; no procedure |
 
 ## Procedure

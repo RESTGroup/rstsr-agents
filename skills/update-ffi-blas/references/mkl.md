@@ -7,22 +7,27 @@ and `service`, plus the shared `mkl_types`.
 
 ## Upstream distribution
 
-The upstream "checkout" is the **install tree**: `~/intel/oneapi/mkl/<version>`
-(per-developer; find it in the repo-root `AGENTS.local.md` /
-`CLAUDE.local.md` - a `Resources and Directories` entry). The non-root default
-of the offline installer is `$HOME/intel/oneapi`; installs must not use `sudo`
-(root installs go to `/opt/intel/oneapi`, a different tree than the one the
-crate's dyload search and the recorded path assume).
+The upstream "checkout" is the **install tree**, and where it sits is
+per-developer: find it in the repo-root `AGENTS.local.md` / `CLAUDE.local.md`
+(a `Resources and Directories` entry; example `~/intel/oneapi/mkl/<version>`).
+The non-root default of the offline installer is `$HOME/intel/oneapi`;
+installs must not use `sudo` (root installs go to `/opt/intel/oneapi`, a
+different tree than the one the crate's dyload search and the recorded path
+assume).
 
 Get a newer version from the download page's Linux "offline installer" link
-(direct `registrationcenter-download.intel.com` URL, no registration), then:
+(direct `registrationcenter-download.intel.com` URL, no registration), keep it
+wherever you keep downloads, then:
 
 ```bash
-cd ~/Downloads
+cd <download dir>
 wget <intel-onemkl-<version>_offline.sh URL>
 sh ./intel-onemkl-<version>_offline.sh -a --silent --eula accept \
     --install-dir="$HOME/intel/oneapi"
 ```
+
+Record the installer and the resulting install tree in `CLAUDE.local.md`;
+later runs read the location from there, not from this reference.
 
 The version to record is in `mkl/<ver>/include/mkl_version.h`
 (`INTEL_MKL_VERSION`, e.g. `20260100` = 2026.1; `__INTEL_MKL_BUILD_DATE` is the
@@ -113,7 +118,8 @@ cargo fmt --all -- --check
   the runtime library, as both `<name>` and `<name>_`. With the install at hand:
 
   ```bash
-  nm -D ~/intel/oneapi/mkl/<ver>/lib/libmkl_rt.so | awk '{print $NF}' | LC_ALL=C sort -u > /tmp/mkl_exports.txt
+  # <install tree> = the one recorded in CLAUDE.local.md, e.g. ~/intel/oneapi/mkl/2026.1
+  nm -D <install tree>/lib/libmkl_rt.so | awk '{print $NF}' | LC_ALL=C sort -u > /tmp/mkl_exports.txt
   grep -oE '^void[[:space:]]+[A-Za-z_][A-Za-z0-9_]*' rstsr-mkl-ffi/header/mkl_lapack.h \
       | awk '{print tolower($2)}' | sed -e 's/_64$//' -e 's/_$//' | LC_ALL=C sort -u > /tmp/mkl_names.txt
   { sed 's/$/_/' /tmp/mkl_names.txt; cat /tmp/mkl_names.txt; } | LC_ALL=C sort -u \
