@@ -10,6 +10,9 @@ Releases the `rstsr` repo (RESTGroup/rstsr). All workspace crates share one vers
 git tag `rstsr-vX.Y.Z` and a GitHub Release. Publishing itself happens in CI
 (**release-plz**); this skill orchestrates it from the CLI with `gh`.
 
+The repo's default branch is `main` (formerly `master`); all branch refs below
+use `main`.
+
 **Scope**: `rstsr` repo only. Releases of `rstsr-ffi` and `tblis-rs` are **not**
 covered by this skill.
 
@@ -24,7 +27,7 @@ covered by this skill.
   repo settings forbid Actions-created PRs (403 "GitHub Actions is not permitted
   to create or approve pull requests"; observed 2026-06-25 and 2026-08-14). Do
   not dispatch it unless that setting is re-enabled.
-- The release CI **runs no tests**. Green CI on `master` HEAD (checked in
+- The release CI **runs no tests**. Green CI on `main` HEAD (checked in
   pre-flight) is the quality gate; do not add local test runs unless asked.
 - crates.io publishing and git tags are **irreversible**.
 
@@ -33,7 +36,7 @@ covered by this skill.
 Only on **explicit user instruction in the session**, never assumed from permissions:
 
 - dispatching either workflow (`gh workflow run`),
-- merging, or pushing the release commit to `master`,
+- merging, or pushing the release commit to `main`,
 - anything touching crates.io, including `cargo yank`.
 
 Free: local reads, `gh run list/watch`, `gh pr list/view`, `cargo semver-checks`,
@@ -44,9 +47,9 @@ follows skill `git-commit-coauthor`.
 
 ```bash
 cd rstsr
-git fetch origin && git status -sb                 # clean, in sync with origin/master
+git fetch origin && git status -sb                 # clean, in sync with origin/main
 grep -n publish rstsr-test-manifest/Cargo.toml    # MUST show publish = false
-gh run list -R RESTGroup/rstsr --branch master -L 10   # clippy + test workflows green on HEAD sha
+gh run list -R RESTGroup/rstsr --branch main -L 10   # clippy + test workflows green on HEAD sha
 git log --oneline rstsr-v<last>..HEAD             # enumerate release content
 ```
 
@@ -82,14 +85,14 @@ commit titles carry no semver signal); the human decides the final version.
    `(RESTGroup/rstsr#NN)`, indented prose for elaboration. No entries for
    test-only or meta commits.
 3. Commit subject `Update to vX.Y.Z` (historical shape: exactly `Cargo.toml` +
-   `CHANGELOG.md`; no `Cargo.lock`); push to `master` (gated).
+   `CHANGELOG.md`; no `Cargo.lock`); push to `main` (gated).
 4. Cross-check: a `release-plz-pr.yml` dispatch log prints `next version is X.Y.Z`
    per crate (patch by default for plain commit titles) - advisory only, the human
    sets the real version in step 1.
 
 ## Publish and verify
 
-1. Dispatch (gated): `gh workflow run release-plz.yml -R RESTGroup/rstsr --ref master`;
+1. Dispatch (gated): `gh workflow run release-plz.yml -R RESTGroup/rstsr --ref main`;
    `gh run watch`.
 2. Verify (free):
 
