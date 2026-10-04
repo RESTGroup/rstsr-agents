@@ -22,6 +22,7 @@ Reference checkouts (NumPy/SciPy/array-api clones used by the test skills) live 
 - **Write in English**: The user may interact in any language (Chinese, English, for example). As AI agent, communicate in the same language as the user. However, code, code comments, documentation, and commit messages should always be in English.
 - **Code comments be concise and descriptive, not explanatory**: In many situations, code can explain itself. Some AI models can be too verbose in code comments if no harness restrictions. Make comments concise. Limit non-docstring comments to 1-2 lines, no more than 4 lines; break this rule unless very necessary. Docstring are for API callers; detailed docstring is better, but do not expand explanation on algorithms and techniques in docstring comments.
 - **Create new branch for edits**: Except for trivial edits (typo, formatting) or version release commits, create a new branch for any edits. Do not commit to main branch directly. This applies to rstsr, rstsr-ffi, rstsr-book; but not to rstsr-agents.
+- **Large files**: If you find large or bulky files in a published repository — especially ones that are or would be handled via `.gitignore` — do not act on your own: ask the user. Whether such files stay ignored, get tracked (possibly via Git LFS), or get deleted is the maintainer's decision.
 
 ## Developer resources
 
