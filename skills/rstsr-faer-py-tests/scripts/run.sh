@@ -5,16 +5,19 @@
 #
 #   MODULE=numpy ./run.sh                      # baseline gate
 #   MODULE=rstsr_faer.api CHUNKED=1 ./run.sh   # subject under test
+#   NO_EXPLAIN=1 MODULE=rstsr_faer.api ./run.sh # skip hypothesis's explain phase (fast red maps)
 #   ./run.sh array_api_tests/test_constants.py # one module (MODULE still applies)
 #
-# Knobs: MODULE, CHUNKED, FRESH, MAX_EXAMPLES, SKIPS_FILE, XFAILS_FILE,
-#        SUITE_DIR, TEST_PY, REPORTS (default ./reports — run from a
-#        scratch dir, not from inside a git checkout).
+# Knobs: MODULE, CHUNKED, FRESH, MAX_EXAMPLES, NO_EXPLAIN, SKIPS_FILE,
+#        XFAILS_FILE, SUITE_DIR, TEST_PY, REPORTS (default ./reports — run
+#        from a scratch dir, not from inside a git checkout).
 # Anything after the script name is passed straight to pytest.
 #
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Bundled pytest plugin (no_explain.py) must be importable from any cwd.
+export PYTHONPATH="$HERE${PYTHONPATH:+:$PYTHONPATH}"
 SUITE_DIR="${SUITE_DIR:-$HOME/array-api-tests}"
 TEST_PY="${TEST_PY:-$(command -v python3)}"
 REPORTS="${REPORTS:-$PWD/reports}"
@@ -46,6 +49,14 @@ for arg in "$@"; do
 done
 if [ -n "${MAX_EXAMPLES:-}" ]; then
     PYTEST_ARGS+=(--max-examples "$MAX_EXAMPLES")
+fi
+# Hypothesis's explain phase (>= 6.131) computes a minimal-explanation blob
+# after every failure and can dominate a red run (measured 93% of one file:
+# 34.2s of 36.8s). NO_EXPLAIN=1 drops the phase via the bundled plugin
+# (counts unchanged); leave it off when a single failure's "Draw N" blob is
+# the evidence you want.
+if [ -n "${NO_EXPLAIN:-}" ]; then
+    PYTEST_ARGS+=(-p no_explain)
 fi
 PYTEST_ARGS+=(
     --disable-deadline          # the suite's 800ms/example deadline is for CI only

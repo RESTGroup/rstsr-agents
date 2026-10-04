@@ -19,6 +19,7 @@
 
 # Scratch output / agent session artifacts
 tmp*
+__pycache__/
 
 # CLAUDE.md at root directory
 # This repository uses AGENTS.md (usual agent file).

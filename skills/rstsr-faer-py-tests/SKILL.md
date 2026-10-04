@@ -60,10 +60,11 @@ installs test deps (pytest, pytest-json-report, hypothesis, ndindex) into
 | `./scripts/run.sh array_api_tests/test_creation_functions.py` | single file (MODULE still applies) |
 | `FRESH=1 …` | delete the `.hypothesis` example DB for canonical counts |
 | `MAX_EXAMPLES=20 …` | quick smoke |
+| `NO_EXPLAIN=1 …` | skip hypothesis's explain phase — red-map speedup (≈15× on failure-heavy files; the "Draw N" repro blob is dropped, counts unchanged) |
 | `SKIPS_FILE=… XFAILS_FILE=… …` | gap machinery (suite-native flags; the files live with the grading task, never upstream) |
 
 Anything after the script name is passed straight to pytest. Other knobs:
-`SUITE_DIR`, `TEST_PY`, `REPORTS`, `API_VERSION`.
+`SUITE_DIR`, `TEST_PY`, `REPORTS`, `API_VERSION`, `NO_EXPLAIN`.
 
 ## 4. Reading the results
 
@@ -86,6 +87,14 @@ dropped a whole file from the totals (2026-10-04: collection read 1366
 instead of 1382, unnoticed until re-checked). After any chunked run,
 confirm chunk count == number of `array_api_tests/test_*.py` files (19 at
 pin `6c0b59f`).
+
+On a red module, wall time is dominated by hypothesis's *explain* phase (the
+post-failure "Draw N ..." minimal-explanation blob) — measured 2026-10-04:
+34.2s of a 36.8s failure-heavy file, while generate/shrink were 1.3s/0.8s;
+~1000 failures × per-failure explain is the whole run. `NO_EXPLAIN=1` drops
+the phase (bundled `no_explain.py`; loads a child of the suite's hypothesis
+profile in `pytest_configure` — a later load does not take effect). Keep it
+unset when one failure's explanation blob is the evidence you need.
 
 ## 6. Debugging a balloon or abort
 
