@@ -107,11 +107,11 @@ unset when one failure's explanation blob is the evidence you need.
   run pytest with `-s` as well): the last logged call is the culprit.
 - `ulimit -v <kb>` bounds a repro's blast radius; `journalctl -k | grep -i
   'out of memory'` gives the RSS at kernel kill time.
-- Known rstsr-side hazard (2026-10-04): `rt::arange` loops forever when the
-  step points away from the stop (`arange(0, 4.15e9, step=-1.3e8)`); the
-  shim guards it value-exactly, but any new binding path reaching raw
-  `rt::arange` with suite-drawn inputs will OOM the machine without
-  `ulimit`.
+- Historical hazard, fixed 2026-10-04 rust-side: `rt::arange` used to loop
+  forever on a step pointing away from the stop (`arange(0, 4.15e9,
+  step=-1.3e8)` OOM'd the machine). The lesson stands: a Rust-side runaway
+  aborts the process, so suite red runs stay CHUNKED and repros stay under
+  `ulimit` until the culprit is fixed and verified.
 
 ## 7. Discipline (rstsr project rules)
 
