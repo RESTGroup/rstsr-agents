@@ -119,7 +119,11 @@ unset when one failure's explanation blob is the evidence you need.
   `rstsr_faer.api` from the standard gets an entry, categorized
   `rust-side` / `shim-side` / `suite`. Rust-side problems are never fixed
   agent-side: register them and wait for the maintainer.
-- Zero rstsr-core/rstsr-native-impl edits from the testing side; the shim
-  (`crates-interop/rstsr-faer-py`) is the only place value-exact
-  workarounds may live, and each one must be backed by a register entry.
+- Zero rstsr-core/rstsr-native-impl edits from the testing side without
+  owner permission; the shim (`crates-interop/rstsr-faer-py`) is a pure
+  **wrapper**: marshalling, validation, and rstsr calls only — no
+  algorithms in either its Rust or Python layer. A missing capability is a
+  register entry and a rust-side fix request; a shim-side algorithm needs
+  the owner's explicit per-case permission, and each workaround must be
+  backed by a register entry.
 - Never publish the wheel; it is a local validation instrument only.
