@@ -37,7 +37,31 @@ maturin build --release -i "$TEST_PY" -o /tmp/wheels   # maturin must run from t
 
 Python-side edits (`python/rstsr_faer/*.py`) need no rebuild — copy the
 tree over the installed package in site-packages. Rust-side edits need the
-maturin rebuild (~30 s incremental release).
+maturin rebuild (see below for what it costs).
+
+### Build time and opt-level (measured 2026-10-05)
+
+A shim-crate edit costs a full release rebuild of the crate: **~6 min** at
+the default opt-level since the W2 elementwise pass (before it: ~30 s). The
+cost is the pair-dispatch tables (`dispatch_bin_promote!` ~270 arms +
+`dispatch_bin_promote_eq!` ~170 in `any_tensor.rs`, expanded once per op
+wrapper) — thousands of monomorphizations in one crate, dominated by LLVM
+codegen; even opt-level 0 spends ~1m14s.
+
+| opt-level | shim-only rebuild | full build (deps + shim) | full suite time |
+| --- | --- | --- | --- |
+| 0 | 1m14s | 1m26s | 60 s |
+| 2 | 5m47s | 6m08s | 59 s |
+| 3 | 6m05s | ≥6m19s | 59 s |
+
+The suite is hypothesis-dominated (arrays ≤ 1024 elements), so the opt-level
+is free on the test side: **use `CARGO_PROFILE_RELEASE_OPT_LEVEL=0` for dev
+iterations** (~5× faster rebuilds, identical suite verdicts) and keep
+opt-level 3 for the wheel whose numbers get recorded. Runtime cost of opt 0
+on real compute (1e6 f64, best-of-blocks): add 0.79 ms / exp 3.2 ms vs
+0.14 / 0.55 ms at opt 2/3 (numpy reference: 0.16 / 0.38 ms) — so opt 0 is
+unsuitable for perf measurements. opt 2 and opt 3 are indistinguishable in
+both compile and run time.
 
 ## 2. One-time suite setup
 
@@ -95,6 +119,12 @@ post-failure "Draw N ..." minimal-explanation blob) — measured 2026-10-04:
 the phase (bundled `no_explain.py`; loads a child of the suite's hypothesis
 profile in `pytest_configure` — a later load does not take effect). Keep it
 unset when one failure's explanation blob is the evidence you need.
+
+With `NO_EXPLAIN=1` and a warm `.hypothesis` DB the whole 19-file chunked
+suite runs in **~60 s** (measured 2026-10-05), and the wall time did not move
+between wheel opt-levels 0/2/3 — the suite measures conformance, not Rust
+speed, so never read suite time as a performance signal (see §1 for that
+measurement).
 
 ## 6. Debugging a balloon or abort
 
