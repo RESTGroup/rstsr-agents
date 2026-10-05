@@ -91,8 +91,11 @@ Type-level docstrings are deliberately **free-form** - no template. The floor:
 
 One function family = one anchor + minimized variants.
 
-- **Anchor selection**: the *panic-version free function returning a view*
-  (`transpose`, `flip`, `slice`). It gets the full docstring.
+- **Anchor selection**: the *panic-version free function* of the family -
+  typically the view-returning form (`transpose`, `flip`, `slice`), but the
+  same rule holds for families whose plain form returns a scalar or an owned
+  tensor (`sum`, `mean`, `asarray`); "anchor" is about failure mode, not
+  return type. It gets the full docstring.
 - **Exception**: when ownership semantics differ meaningfully inside the family,
   more than one member may be full-tier. Exemplar: the reshape family, where
   `reshape` (borrow -> `TensorCow`) and `into_shape` (owned -> `Tensor`) both
