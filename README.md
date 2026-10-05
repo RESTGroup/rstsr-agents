@@ -24,6 +24,7 @@ rstsr-agents/
     ├── core-test/             #   author parity test + doc test + docstring
     ├── core-issue-regression/ #   regression test for a reported issue
     ├── core-numpy-sync/       #   NumPy test-surface drift detection
+    ├── rstsr-faer-py-tests/   #   grade rstsr-faer-py (rstsr_faer.api) against array-api-tests (self-contained scripts/)
     ├── core-col-major-transfer/ # (stub, deferred)
     ├── crate-publish/         #   rstsr release via release-plz
     ├── update-ffi-blas/       #   rstsr-ffi binding updates (references/lapack.md, openblas.md, mkl.md, aocl.md + checker)
