@@ -77,7 +77,43 @@ Recovered from the pre-`rstsr-agents` rules; names verified against v0.8.0.
 - **Tuple-style overloads (API traits)**: implement the `TensorView<'_, T, B, D>`
   value form alongside the `&TensorAny<R, ...>` form (all cross combinations
   for multi-tensor tuples), so callers never need a `&` on a view - reference:
-  `op_binary_common.rs`, `sorting.rs` / `searching.rs` / `set.rs`.
+  `op_binary_common.rs`. This applies to the families that keep an API trait
+  (the creation functions, whose first argument is not a tensor: `asarray`,
+  `concat` / `stack`, `diag`, `meshgrid`, ...).
+- **Public API signature conventions** (tensor-tier `rt::` functions and the
+  `TensorAny` methods):
+  - **`func_f` carries exactly the signature of `func`** - same generic
+    parameters, same parameters in the same order, same bounds - differing only
+    in the return type (`Result<...>`). Write the panicking form as
+    `func_f(...).rstsr_unwrap()`; method twins follow the same rule
+    (`x.func_f(...)` vs `x.func(...)`).
+  - **A function whose first argument is a tensor gets an associated method**
+    `x.func(...)` sharing the free function's signature from the second
+    parameter onward; for two-tensor functions `rt::func(x1, x2, ..)` and
+    `x1.func(x2, ..)` are equivalent. Exceptions: functions whose first
+    argument is not a tensor (`asarray` and the creation family) - they keep
+    the API-trait plus tuple-call form.
+  - **Argument groups travel as one tuple parameter**: `rt::repeat(x,
+    (repeats, axis))`, `rt::sort(x, (axis, descending, stable))`,
+    `rt::searchsorted(x1, x2, (side, sorter))` - not `rt::repeat((x, repeats,
+    axis))`. The group type (`RepeatArgs`, `RollArgs`, `SortArgs`,
+    `SearchSortedArgs`, ...) supplies the overloads through `From` / `TryFrom`
+    (`(a, b)`, `a`, `()`, `None`, ...), so a single signature covers every
+    documented call shape. Note `func(x, y)` (two parameters) and `func((x, y))`
+    (one tuple parameter) are different signatures; overloading always uses the
+    tuple form as a single parameter.
+  - **When `()` is a valid overload, `None` must be too**: add
+    `impl From<Option<()>> for XArgs` mapping it to the same default (bare
+    `None` then infers). Do NOT use a blanket `impl<T> From<Option<T>>`: it
+    breaks bare-`None` inference (E0282) and silently turns `Some(_)` into the
+    default. When a group's overload is a *generic* conversion, the bare form
+    must be a concrete / non-tuple-constructor impl, otherwise it collides with
+    the tuple impl.
+  - **Axis parameters**: a single-axis parameter takes `impl TryInto<AxisIndex>`
+    (`AxisIndex::None` means "the last axis", `()` and `None` convert to it); a
+    multi-axis parameter takes `AxesIndex`.
+- **Tensor arguments in free functions that only read them**: take
+  `impl TensorViewAPI<Type = T, Backend = B, Dim = D>` (see the bullet above).
 - **Named multi-output structs** (e.g. `UniqueCounts`): convert to and from the
   plain tuple through `From` in both directions, and document the `.into()`
   usage in the function docstring.

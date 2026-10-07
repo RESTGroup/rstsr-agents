@@ -63,6 +63,22 @@ on real compute (1e6 f64, best-of-blocks): add 0.79 ms / exp 3.2 ms vs
 unsuitable for perf measurements. opt 2 and opt 3 are indistinguishable in
 both compile and run time.
 
+**Always `--release` (any opt-level), never the dev profile** (2026-10-07).
+Dropping `--release` to get an "opt-0 wheel" silently turns on
+`debug-assertions`, and integer-overflow panics then flip exactly 10 nodes
+`passed → failed` (1049/251/82 instead of 1059/241/82):
+`test_bitwise_{left,right}_shift[__{,i}shift__]`, `test_subtract[__sub__(x, s)]`,
+`test_sum`, `test_prod`, `test_cumulative_prod`, `test_diff`,
+`test_diff_append_prepend`. Those nodes pass in every stamp built with the
+release profile, so a 10-node red shift is a build-profile smell, not a
+regression.
+
+**Memory**: a default `--release` (opt-level 3) cdylib link can be OOM-killed on a
+loaded machine (`rustc … (signal: 9, SIGKILL)` with no rustc diagnostic, cargo
+building with `nproc` jobs, swap exhausted). Memory-lean build that keeps the
+verdicts identical:
+`CARGO_BUILD_JOBS=2 CARGO_PROFILE_RELEASE_DEBUG=0 CARGO_PROFILE_RELEASE_OPT_LEVEL=0 maturin build --release -i "$TEST_PY" -o /tmp/wheels`.
+
 ## 2. One-time suite setup
 
 ```bash
