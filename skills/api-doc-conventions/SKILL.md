@@ -215,7 +215,13 @@ Rules:
   functions with shape input (`zeros`, `ones`, `full`, `eye`, `uninit`,
   `empty`, ...; note `arange`/`linspace` are always 1-D and order-independent),
   `to_contig`/`to_prefer` (when the order argument is the device default),
-  `into_compatible_shape`.
+  `into_compatible_shape`, and the **flattened visit order** family: `repeat` /
+  `roll` with `axis = None`, `nonzero` (coordinate sequence), the `unique_*`
+  first-occurrence sequence. The flattened visit order is the `reshape(-1)`
+  order (row-major under `RowMajor`, column-major under `ColMajor`, matching
+  `iter()`); functions whose results depend on it - even only per-form or
+  per-dtype (e.g. repeat/roll: explicit-axis forms are (a), the flattened form
+  is (b)) - carry the (b) warning div stating which outputs follow the order.
 - The **broadcast-rule asymmetry** (row-major aligns shapes from the *last*
   axis, NumPy-style; column-major from the *first* axis, Fortran/Julia-style) is
   documented **once** on the order-semantics page (which also covers what the

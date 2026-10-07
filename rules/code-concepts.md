@@ -67,6 +67,28 @@ Recovered from the pre-`rstsr-agents` rules; names verified against v0.8.0.
   buffers (unsafe reference casts guarded by the `TypeId` equality) instead of
   widening the public bound - the blas-crate matmul `impl_uninit_dispatch!` and
   `device_cpu_serial/set.rs`'s `for_each_fast_dtype!` are the reference shapes.
+- **Tensor arguments in free functions**: when the function only reads its
+  tensor inputs, take `impl TensorViewAPI<Type = T, Backend = B, Dim = D>`
+  instead of `&TensorAny<R, T, B, D>` - it accepts owned tensors, references,
+  `&mut`, and views by value, and drops the `R` parameter and its `DataAPI`
+  bound (reference: the reductions; the manip/sort/set wave follows). Functions
+  that need ownership or repr capabilities keep `R` generic bounds (e.g.
+  `roll_f`'s `DataIntoCowAPI`, `diff_f`'s `DataCloneAPI`).
+- **Tuple-style overloads (API traits)**: implement the `TensorView<'_, T, B, D>`
+  value form alongside the `&TensorAny<R, ...>` form (all cross combinations
+  for multi-tensor tuples), so callers never need a `&` on a view - reference:
+  `op_binary_common.rs`, `sorting.rs` / `searching.rs` / `set.rs`.
+- **Named multi-output structs** (e.g. `UniqueCounts`): convert to and from the
+  plain tuple through `From` in both directions, and document the `.into()`
+  usage in the function docstring.
+- **Flattened visit order follows the device default order**: row-major
+  flattens row-major, column-major flattens column-major (the `reshape(-1)`
+  order, matching `iter()`). Applies to `repeat` / `roll` with `axis = None`,
+  `nonzero`, and the `unique_*` first-occurrence sequence; device kernels take
+  the order as a `FlagOrder` parameter from `self.default_order()`.
+- **Multi-index iteration**: reuse rstsr-common's layout iterators
+  (`IndexedIterLayout`, `IterLayoutRowMajor` / `IterLayoutColMajor`) instead of
+  hand-rolled index generators.
 
 ## Common commands
 
