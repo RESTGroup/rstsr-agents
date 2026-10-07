@@ -48,6 +48,25 @@ Recovered from the pre-`rstsr-agents` rules; names verified against v0.8.0.
     bound is simple (no composition or multiple bounds);
   - prefer `impl<T> where T: Trait` over `impl<T: Trait>` for readability, unless
     the bound is trivial (`Clone`, `Default`, ...).
+- **Trait-bound placement (tensor vs device)**:
+  - element-type (`T`) requirements belong at the device operator/impl level, not
+    on tensor-layer functions; the tensor layer carries device-trait bounds only
+    (e.g. `B: OpAddAPI<T, D>`) - see `tensor/operators/op_binary_common.rs`.
+    Exceptions: arithmetic operator overloading (`op_binary_arithmetic.rs`) and
+    `op_with_func.rs`;
+  - a device op needing element behavior (ordering, zero tests, ...) states the
+    bound on its device impl (e.g. `T: ExtSortCmp` in
+    `device_cpu_serial/searching.rs`); element callbacks like
+    `&dyn Fn(&T) -> bool` are not GPU-meaningful and do not belong in device-op
+    signatures;
+  - tensor-layer functions are thin wrappers: layout/argument checks, output
+    allocation via `uninit_impl`, then the device op. `outof_cpu_vec` is a last
+    resort (host-buffer import); prefer caller-allocated buffers filled by the
+    device op.
+- **Fast paths for known dtypes** dispatch by `TypeId` and re-type the raw
+  buffers (unsafe reference casts guarded by the `TypeId` equality) instead of
+  widening the public bound - the blas-crate matmul `impl_uninit_dispatch!` and
+  `device_cpu_serial/set.rs`'s `for_each_fast_dtype!` are the reference shapes.
 
 ## Common commands
 

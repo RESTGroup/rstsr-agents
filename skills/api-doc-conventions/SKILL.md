@@ -353,7 +353,10 @@ RSTSR overloads via tuple arguments (`rt::asarray((vec, shape, &device))`).
    §6).
 2. **Docstring (self-contained)**: the difference is stated fully inline in
    `# Notes of API accordance`. No dead-end links: a docs.rs reader gets the
-   complete statement.
+   complete statement. Repository-local paths (e.g.
+   `tests/tracking/numpy_differences.md`) MUST NOT be cited - a docs.rs reader
+   cannot resolve them; state the fact in plain language or as a doc example.
+   The layer-3 GitHub blob URL is the only sanctioned registry pointer.
 3. **Published report (humans)**: a rstsr-book page mirroring the registry -
    manual mirror first, scripted generation later only if drift hurts.
    Docstrings link the book URL once it exists; until then, the GitHub blob URL
