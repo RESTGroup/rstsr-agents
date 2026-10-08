@@ -19,7 +19,11 @@ description: Write RSTSR pull-request titles and bodies in the house style - a c
    the head when it differs from the base repo:
    `gh pr create --repo <upstream-owner>/<repo> --head <fork-owner>:<branch>
    --title "<title>" --body-file -` with a heredoc (or a scratch file you do
-   not commit); later updates via `gh pr edit --body-file -`.
+   not commit). For later edits, `gh pr edit --body-file -` fails on
+   repositories with classic Projects enabled (a GraphQL `projectCards` error
+   that leaves the body unchanged) — update through the REST API instead:
+   `gh api -X PATCH repos/<owner>/<repo>/pulls/<n> --input <json>`, with the
+   body as `{"body": "..."}`.
 
 ## Title
 
@@ -43,7 +47,9 @@ Two parts, in this order.
 The release note for this PR: written so the section can be pasted into
 `CHANGELOG.md` as-is (the *paste test*). The release manager appends the
 repository PR reference when assembling a release, so never write
-`(RESTGroup/rstsr#NN)` yourself.
+`(RESTGroup/rstsr#NN)` yourself; keep internal references out of the body
+entirely — tracking codes and local filesystem locations (absolute or `~`
+paths, workspace directories) alike — and state the capability, not the ticket.
 
 Use the CHANGELOG category headings, in this order, dropping empty ones:
 
@@ -87,12 +93,19 @@ is no caveat, rationale, or measurement to report, omit the part.
 
 AI drafts over-report, because they cannot tell what a reader needs; the human
 bar is that every line changes what the reviewer does next — look here first,
-watch this risk, trust this number. Lines that only prove the work happened
+watch this risk, trust this number. Keep the tone minimal and plain — say what
+changed and why it matters, then stop. Lines that only prove the work happened
 belong elsewhere:
 
 - a walkthrough of files/functions touched (the diff shows it);
 - full verification logs and pass-count matrices (CI shows them);
 - an inventory of behavior left unchanged or deferred (silence is fine);
+- internal references a reader cannot resolve — tracking codes (`G-038`,
+  backlog items, campaign names) and local filesystem locations (absolute or
+  `~` paths, workspace or scratch directories);
+- local workarounds and shortcuts, current or future ("delegates for now",
+  "temporarily serial", "can be optimized later") — give the shipped contract,
+  not the scaffolding;
 - a summary repeating Part 1.
 
 ## Example
