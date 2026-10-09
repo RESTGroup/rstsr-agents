@@ -32,3 +32,5 @@ __pycache__/
 # Memory files (related to user's personal perferences)
 /memory/
 
+# Settings files (related to user's personal perferences)
+settings.json

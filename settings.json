@@ -13,5 +13,6 @@
       "Bash(git log:*)",
       "Bash(git add:*)"
     ]
-  }
+  },
+  "worktree": { "bgIsolation": "none" }
 }
