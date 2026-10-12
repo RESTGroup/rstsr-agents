@@ -7,10 +7,13 @@ description: Translate a LAPACK routine into the rstsr BLAS device driver layer 
 
 Operational recipe for translating a LAPACK routine into the
 `rstsr-blas-traits` driver layer, or retrofitting an existing translation to
-the settled policy. Design rationale ("why") lives in **ADR-0009**
-(`rstsr-book/dev/adr/`); this skill carries the "how" only. The fact base
-behind the decisions (LAPACKE/scipy/numpy behavior studies) is recorded in
-`rstsr-improve-trajectory/2026-10-11-lapacke-layer/FINDINGS.md`.
+the settled policy. Two ADRs carry the "why": **ADR-0009**
+(`rstsr-book/dev/adr/`) for the LAPACKE translation layer
+(`driver_impl/lapack/**`, the raw-Fortran driver files), and **ADR-0010** for
+the LAPACK interface layer (`src/lapack_*/`, the builders). This skill
+carries the "how" only; each section below names the layer it belongs to. The
+fact base behind the decisions (LAPACKE/scipy/numpy behavior studies) is
+recorded in `rstsr-improve-trajectory/2026-10-11-lapacke-layer/FINDINGS.md`.
 
 > **Gap-notice rule (mandatory)**: if a routine you are translating hits a
 > situation this recipe does not cover, **stop and report** — tell the user
@@ -21,13 +24,16 @@ behind the decisions (LAPACKE/scipy/numpy behavior studies) is recorded in
 
 ```
 rstsr-blas-traits/
-├── src/{lapack_solve,lapack_eigh,lapack_svd}/   # generic builder layer (dtype-agnostic)
+├── src/{lapack_solve,lapack_eigh,lapack_svd}/   # LAPACK interface layer (ADR-0010)
 │     XxxDriverAPI<T> trait + builder struct XX_<'a,B,T> (+ aliases S/D/C/ZXX)
-├── driver_impl/lapack/                          # hand-written raw-Fortran impls (PRIMARY)
+├── driver_impl/lapack/                          # LAPACKE translation layer (ADR-0009, PRIMARY)
 │     <family>/<routine>.rs                      # shared by vendor crates via symlinks
-├── driver_impl/lapacke/                         # thin C-LAPACKE passthroughs (openblas+mkl only)
+├── driver_impl/lapacke/                         # LAPACKE translation layer, passthrough (openblas+mkl only)
 └── src/util/{util_tensor.rs,util_layout.rs}     # overwritable_convert, get_output_order, ...
 ```
+
+The `XxxDriverAPI` trait (defined in `src/lapack_*`) is the seam between the
+two layers: the builders call it, the `driver_impl/` trees implement it.
 
 - `lapack` is the primary path (most BLAS vendors ship no LAPACKE in their
   shared library); `lapacke` stays as an optional feature for openblas+mkl.
@@ -41,15 +47,15 @@ rstsr-blas-traits/
 - `blas_int` is `i32` (or `i64` under feature `ilp64`) — keep every FFI-side
   integer as `blas_int`; never hard-code `as i32` casts on info/ld values.
 
-## 2. Input policy (per tensor argument)
+## 2. Input policy — interface layer, ADR-0010 (per tensor argument)
 
 Classify each 2-D tensor input, then apply:
 
 | Case | Meaning | Action |
 |---|---|---|
 | **f-prefer** (incl. f-contig) | column stride structure; `ld` = `stride[0]`-derived leading stride (need NOT equal nrows) | **zero-copy pass** by raw pointer with derived `lda` |
-| **c-contig / c-prefer** | row-major structure | **clone** into a fresh F-order buffer (bridge copy in) |
-| **fully non-contiguous** | neither (e.g. sliced both dims, broadcast) | **clone** into F-order (rstsr extension — LAPACKE cannot express this) |
+| **c-contig / c-prefer** | row-major structure | **clone** into the call order (bridge copy in) |
+| **fully non-contiguous** | neither (e.g. sliced both dims, broadcast) | **clone** into the call order (rstsr extension — LAPACKE cannot express this) |
 
 - Routines that **overwrite** their input (factorizations gesv/getrf/potrf/
   sysv, in-place solves): clone-or-consume **regardless of contiguity**
@@ -58,63 +64,80 @@ Classify each 2-D tensor input, then apply:
   must be materialized first.
 - 1-D arguments (w, s, ipiv, tau, b-vector): order is irrelevant; require
   or force contiguity (`.into_contig_f()` on views) before pointerizing.
-- **One order rule per call**: all matrices of one call share the chosen
-  order; do not mix (the latent 1-column-`b` mismatch of legacy gesv/sysv
-  is fixed by choosing the order once, from the mutable argument, then
-  converting every tensor to it).
+- **One order rule per call**: the builder picks one order for the whole
+  call through `get_output_order(&[first-class output tags], &[(c_prefer,
+  f_prefer) votes], device.default_order())` — an explicit `out=` wins
+  first-class; input votes decide otherwise; both-prefer and neither-prefer
+  inputs are neutral (ambiguous falls to the device default). Do not
+  hand-roll `match (c_prefer, f_prefer)` blocks (the 1-column-`b` mismatch
+  of legacy gesv/sysv came from exactly that).
 
 ## 2a. Output policy
 
-- **Fresh outputs**: allocate in the **device default order**
-  (`device().default_order()`), numpy-parity. If row-major device, one
-  bridge copy out (F→C) after the LAPACK call — the same price scipy pays.
-- **In-place / overwritable outputs**: the returned tensor **is** the input
-  buffer, keeping its (possibly F) order — scipy `overwrite_*` semantics.
-  Never bridge-copy an in-place result.
+One order per call (Section 2's "order rule"): the builder picks the call
+order from the input preference (f-prefer → ColMajor, c-prefer → RowMajor,
+ambiguous → device default), and **fresh outputs are allocated in the call
+order** — for prefer inputs the output strides follow the input layout.
+Values stay numpy-parity; only strides differ for minority-layout inputs.
+(In-place/overwritable outputs keep their buffer's order — scipy
+`overwrite_*` semantics; the call order makes that the input's own order.)
 - View-only f-prefer inputs always pass zero-copy (Section 2), independent
   of the output policy.
 - Zero-size (`min(m,n) == 0`): synthesize the LAPACK result in the builder
   without calling the driver — identity sub-blocks (jobz='A' ⇒ U=I_m,
-  VT=I_n; 'S' ⇒ zero-width), empty `s`/`w`. Never exercise the driver at
-  m==0/n==0.
+  VT=I_n; 'S' ⇒ zero-width), empty `s`/`w` — **in the call order**, same as
+  fresh outputs. Never exercise the driver at m==0/n==0.
 
 ## 2b. Bridge copies
 
-- The F↔C bridge = the **per-device orderchange infra** (ambient threading
-  policy; on rayon devices the copy may run parallel — this is the same rule
-  as elementwise ops). Replace any `_cpu_serial` transpose kernel usage in
-  driver files with the device orderchange path.
+- The F↔C bridge is a full-matrix transpose through the orderchange kernels.
+  The driver files call the serial kernel (`orderchange_out_*_ix2_cpu_serial`).
+  Whether the copy should instead run under the device's threading policy is
+  **undecided** (ADR-0009) — do not add threading knobs, and do not treat the
+  serial call as a bug to fix.
 - **Full-matrix copies** for every bridged matrix. No triangle-only
   (`dsy_trans`-style) variants in this campaign — uniform kernel inventory;
   triangle-only is a sanctioned future optimization (see ADR-0009).
 - Bridge failures must surface as `Err` — never `.unwrap()` a bridge result.
 
-## 3. Vendor file shape (driver_impl/lapack/<family>/<routine>.rs)
+## 3. Vendor file shape — translation layer, ADR-0009 (driver_impl/lapack/<family>/<routine>.rs)
 
 Two tiers in ONE file, mirroring LAPACKE's `xxx` / `xxx_work` split; the
 trait method signature is UNCHANGED (do not refactor trait definitions):
 
 ```rust
-// "_work"-equivalent: pure FFI thunk. lwork = -1 ⇒ LAPACK query semantics.
+// "_work"-equivalent: LAPACKE _work tier. lwork = -1 ⇒ LAPACK query semantics.
+// Carries the layout 3-way branch: ColMajor → direct FFI (caller lds);
+// RowMajor → template lds MAX(1, rows), transposed temporaries
+// (orderchange bridges), call, transpose back; per-branch query
+// short-circuit. Bridge/allocation failure ⇒ -1010/-1011 sentinels.
 // `pub` for cross-crate symlink reachability, but internal-purpose:
 // never re-exported through any prelude.
 pub unsafe fn dgesvd_work(
+    order: FlagOrder,
     jobu: char, jobvt: char, m: usize, n: usize,
     a: *mut T, lda: usize, s: *mut T::Real,
     u: *mut T, ldu: usize, vt: *mut T, ldvt: usize,
-    work: &mut [T], lwork: blas_int,
-    rwork: &mut [T::Real],          // complex only
+    work: *mut T, lwork: blas_int,
+    rwork: *mut T::Real,            // complex only
 ) -> blas_int;
 
-// trait impl: thin wrapper = query call → allocate → compute call.
+// trait impl: the lapacke_xxx high-level tier — formula-sized workspaces
+// BEFORE the query (per Section 3a), query call → hardened read-back
+// (Section 3a) → allocate → compute call, both through xxx_work.
 unsafe fn driver_dgesvd(..) -> blas_int { ... }
 ```
 
 - Query call and compute call are **textually separate statements**, both
   routed through `xxx_work`.
-- Workspace ownership + clamps live in the **builder layer** (the trait impl
-  wrapper above), NOT in the thunk and NOT in `src/lapack_*/` generic code.
-- Keep the routine's Fortran argument order inside the thunk signature.
+- Workspace ownership + clamps + query read-back hardening live in the
+  **trait impl** (the wrapper above), NOT in the thunk and NOT in
+  `src/lapack_*/` generic code — the generic builder carries only policy
+  (order choice, input/output conversion, zero-size synthesis, error
+  mapping).
+- Keep the routine's Fortran argument order inside the thunk signature
+  (the `order: FlagOrder` parameter is the rstsr extension replacing
+  LAPACKE's `matrix_layout`).
 
 ## 3a. Workspace policy (per routine family)
 
@@ -151,19 +174,23 @@ superdiagonal in the workspace. Copy out after the compute call: real
 `i < min(m,n)−1`. Keep the 4-tuple return (s, u, vt, superb) at the driver
 tier; higher layers may discard it.
 
-## 3b. Error mapping
+## 3b. Error mapping (info origin: ADR-0009; decode: ADR-0010)
 
-- The thunk returns **raw LAPACK info**. No `info−1` remap (that exists only
-  because LAPACKE inserts `matrix_layout` as arg 1; we have no such arg).
-- The builder layer maps:
+- The thunk returns **raw LAPACK info** in the routine's **Fortran argument
+  numbering** — the leading-dimension checks included, so the index is
+  checkable against the Fortran source. No LAPACKE `info−1` shift (that
+  exists only because LAPACKE inserts `matrix_layout` as arg 1; we have no
+  such arg).
+- The builder layer maps (use `util_error::map_lapack_info`):
   - `info < 0` → `Error` "illegal argument in `<routine>` arg `<-info>`
     (internal bug, please report)";
   - `info > 0` → per-routine semantic message (e.g. "SVD did not converge",
     "matrix is singular / not positive definite");
-  - allocation/bridge failures → normal rstsr errors. **No** −1010/−1011
-  sentinel codes.
-- Replace any `rstsr_assert_eq!(info, 0, ..)` and bridge `.unwrap()` sites —
-  both are Part-2 retrofit items listed in ADR-0009.
+  - `-1010`/`-1011` (tier-internal allocation/bridge sentinels, same values
+    as LAPACKE's `LAPACK_WORK_MEMORY_ERROR`/`LAPACK_TRANSPOSE_MEMORY_ERROR`;
+    real info magnitudes never reach 1010) → `MemoryError`.
+- Replace any `rstsr_assert_eq!(info, 0, ..)` and bridge `.unwrap()` sites
+  with the mapping above.
 
 ## 4. Test matrix (per routine)
 
@@ -213,12 +240,12 @@ Small sizes only (≤ 20 per side). Required dimensions:
 
 ## 6. Deviations (deliberate, do not "fix" without a new grill)
 
-- No NaN/finite pre-check (numpy precedent; callee hazards documented in
-  ADR-0009). Future path: an `_adv_` trait variant with user knobs — a
+- No NaN/finite pre-check (numpy precedent; hazard study in FINDINGS.md).
+  Future path: an `_adv_` trait variant with user knobs — a
   separate structural task, do not implement opportunistically.
 - No triangle-only bridge copies.
 - Zero-size short-circuit synthesizes results (never calls the driver).
 - lapack + lapacke both exist, mutually exclusive; `lapack` is primary.
 - No batching (2-D only) at the driver tier.
-- Multi-threaded transpose policy is an open flag — do not add threading
-  knobs; ambient device policy governs bridge copies.
+- Bridge-copy threading is **undecided** (ADR-0009) — do not add threading
+  knobs, and do not "fix" the serial `orderchange_out_*_cpu_serial` calls.
