@@ -44,6 +44,12 @@ two layers: the builders call it, the `driver_impl/` trees implement it.
   `duplicate_item` blocks (real `[f32]/[f64]`, complex
   `[Complex<f32>]/[Complex<f64>])` — complex needs `*mut` casts and
   `T::Real` scalars.
+- Real/complex-parallel variant (sysv): routines whose complex form splits
+  into symmetric/Hermitian twins use a `HERMI` substitution column in the
+  duplicate table. `duplicate` substitutes the token textually, so the impl
+  header must stay non-generic (`impl SYSVDriverAPI<T, HERMI>`) — a
+  `const HERMI: bool` generic there would receive the literal and fail
+  (E0207/E0425). The real block keeps its own table and generic impl.
 - `blas_int` is `i32` (or `i64` under feature `ilp64`) — keep every FFI-side
   integer as `blas_int`; never hard-code `as i32` casts on info/ld values.
 
