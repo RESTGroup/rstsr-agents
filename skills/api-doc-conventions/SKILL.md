@@ -28,6 +28,11 @@ touch); adding/changing doc examples, doctests, `# Overloads Table`,
 row/column-major notices, or `# Notes of API accordance`; or executing the API
 doc campaign (wholesale docstring retrofit).
 
+Cheat-sheet pages (the umbrella `rstsr::cheatsheet` module and its Rust/Python
+parity tests) are governed by skill **`api-cheatsheet-conventions`**, not this
+policy; the per-item docstring rules here do not apply to table-based
+cheat-sheet rows.
+
 - **Scope**: `rstsr-core` only. Other crates (device crates, `rstsr-common`,
   ...) may adopt these conventions later; nothing here binds them yet.
 - **Normative language**: MUST / MUST NOT / SHOULD / MAY, RFC-2119 style.
