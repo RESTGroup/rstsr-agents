@@ -139,22 +139,25 @@ inapplicable.
    data is cloned).
 7. **`# Examples`** - per §5. Each fenced example gets a one-line `###`-level or
    prose lead-in ("For a 2-D array, this is the standard matrix transpose:").
-8. **`# Elaborated examples`** (opt) - large/complex usage split out of the main
+8. **`# Overload List`** - §6. MUST when the anchor has any overload; placed
+   immediately after `# Examples`: a bullet list of every overload form, then
+   one minimal tested snippet covering them.
+9. **`# Elaborated examples`** (opt) - large/complex usage split out of the main
    examples (row/col differences, cloning occasions). `##` subsections inside.
-9. **Opt deep-dive sections** (opt) - the three sanctioned ones, in this relative
-   order: `# Ownership Semantics between ...` (markdown table; reshape
-   exemplar), `# Tips on common compilation errors` (`compile_fail` + `text`
-   pair; reshape exemplar), `# Migration Guide` (`ignore` fence;
-   into_compatible_shape exemplar).
-10. **`# Notes of API accordance`** - §7. MUST when a counterpart exists in
+10. **Opt deep-dive sections** (opt) - the three sanctioned ones, in this relative
+    order: `# Ownership Semantics between ...` (markdown table; reshape
+    exemplar), `# Tips on common compilation errors` (`compile_fail` + `text`
+    pair; reshape exemplar), `# Migration Guide` (`ignore` fence;
+    into_compatible_shape exemplar).
+11. **`# Notes of API accordance`** - §7. MUST when a counterpart exists in
     NumPy / array-api / PyTorch (which is nearly everything - check
     `src/docs/array_api_standard.md`).
-11. **`# Panics`** - bullet list of panic conditions, closing with
+12. **`# Panics`** - bullet list of panic conditions, closing with
     `For a fallible version, use [`<func>_f`].` On `_f` functions this section is
     `# Errors` territory but `_f` functions are minimal-tier, so it rarely
     appears. `# Safety` on `unsafe fn` is unaffected by this policy and always
     required.
-12. **`# See also`** - three `##` subsections, in order:
+13. **`# See also`** - three `##` subsections, in order:
     `## Similar function from other crates/libraries` (NumPy / array-api /
     PyTorch / ndarray / SciPy links),
     `## Related functions in RSTSR` (semantic neighbors + aliases),
@@ -171,7 +174,7 @@ necessary.
 or in the campaign's sanctioned postfix pass): `# Arguments`/`# Errors` in
 `to_contig`/`to_layout` (use `# Parameters`/`# Panics`); `# See Also` capital-A
 in `vecdot` (use `# See also`); `Panics` before `Examples` in `flip`/`squeeze`
-(canonical position is §3.11); bare `[RowMajor]` links in `reshape`/`broadcast`
+(canonical position is §3.12); bare `[RowMajor]` links in `reshape`/`broadcast`
 (use `[`RowMajor`]`).
 
 ## 4. Row/column-major behavior
@@ -273,6 +276,9 @@ even for the first example):
   `tensor_from_nested!`).
 - **Example splitting**: `# Examples` holds the small/common usages; anything
   large or complex moves to `# Elaborated examples` with `##` subsections.
+- **Overloaded anchors**: `# Examples` keeps the main-behavior usages; the
+  `# Overload List` section follows it (§6). `# Examples` is not replaced -
+  the two coexist.
 
 **Special fences** (sanctioned, sparingly):
 
@@ -307,18 +313,48 @@ unchanged, and any drift MUST be applied doc_draft-first.
 
 ## 6. Overloads
 
-RSTSR overloads via tuple arguments (`rt::asarray((vec, shape, &device))`).
+RSTSR overloads via tuple arguments (`rt::asarray((vec, shape, &device))`), and
+via parameter-level generic arguments (`axis: impl Into<AxesIndex<isize>>`
+accepts `None`, an integer, a tuple, a list).
 
-- Overload-heavy functions (`asarray`, `sum_axes`, creation functions, ...)
-  MUST carry a `# Overloads Table` on the anchor, in the `asarray` style:
-  `##` groups by output type, then full-signature bullets:
-  `- `asarray((input: Vec<T>, shape: D, device: &B)) -> Tensor<T, B, IxD>``.
-  Complete list of tuple forms; grouping prose for families ("Also, overloads
-  for `&Vec<T>` that behave the same as `&[T]`").
-- Mild overloading (a parameter accepting several types) uses parameter-level
-  `- Overloads:` sub-bullets in `# Parameters` instead (reshape's `shape`
-  exemplar) - no table.
-- Examples cover the typical 2-4 forms, not every overload.
+An **overload** exists whenever an argument accepts more than one input kind: a
+tuple-mode argument group (`RepeatArgs`, `RollArgs`, ...), a parameter-level
+`impl Into<...>` / `impl TryInto<...>`, or an `# Overloads Table` family anchored
+by a hand-written API trait.
+
+**Every overloaded anchor MUST carry a `# Overload List` section** (§3.8),
+placed immediately after `# Examples`, with two parts:
+
+1. a bullet list enumerating each overload form. Collapse forms only when their
+   behavior is identical (`Vec` / `&[T]` / `[T; N]` of the same element type);
+   keep distinct bullets when behavior differs (`None` vs an integer vs a tuple,
+   for example). State the accepted types inline (`axis: int / tuple / list /
+   None`).
+2. one fenced doctest giving **minimal but tested** usage - at least one call per
+   distinct behavior - with hidden assertions, per §5.1 (doc_draft first).
+
+When a single parameter admits several *behaviors* (e.g. an `axis` that is `None`
+vs an integer vs a tuple), the snippet adds one call per behavior, not merely one
+per accepted type. Anchors with no overload keep only `# Examples`.
+
+`# Overloads Table` (opt, §3.4) remains the exhaustive *signature* list for
+overload-heavy functions (`asarray`, `sum_axes`, creation functions, ...) in the
+`asarray` style: `##` groups by output type, then full-signature bullets
+(`- `asarray((input: Vec<T>, shape: D, device: &B)) -> Tensor<T, B, IxD>``), with
+grouping prose for families ("Also, overloads for `&Vec<T>` that behave the same
+as `&[T]`"). The `# Overload List` is its example/enumeration view.
+
+- **`None` preferred over `()` in examples**: when an argument accepts both
+  `None` and `()` with *identical* behavior, document both in the `# Overload
+  List` (and `# Parameters`), but write example / doctest code with `None` -
+  `rt::cross(&a, &b, None)`, not `rt::cross(&a, &b, ())`. Keep `()` in the
+  bullet enumeration; `None` is only the preferred spelling in code. When `()`
+  and `None` mean *different* things (`flip`, `squeeze`, ...), keep both as
+  distinct documented forms and use whichever the example exercises.
+- Mild overloading also uses parameter-level `- Overloads:` sub-bullets in
+  `# Parameters` (reshape's `shape` exemplar).
+- `asarray` is exempt from the per-form `# Overload List` snippet (too many
+  forms); it keeps its `# Overloads Table` and typical-form `# Examples`.
 - Hand-written API traits backing an overloaded function (e.g. `AsArrayAPI`)
   SHOULD link to the anchor's table (or repeat it); macro-generated operator
   traits are exempt (§1.3).
@@ -420,3 +456,33 @@ RSTSR overloads via tuple arguments (`rt::asarray((vec, shape, &device))`).
 - **Review posture**: docstrings are "partial AI usage" territory (CLAUDE.md) -
   expect human review of semantic claims (ownership, panics, NumPy-difference
   statements), not of formatting.
+
+## 12. `ext_` extension functions (Array-API type promotion)
+
+`ext_`-prefixed variants (`ext_matmul`, `ext_vecdot`, `ext_outer`, `ext_cross`,
+`ext_tensordot`) exist to mirror the Python Array API standard's **type-promotion
+rules**, which differ from rstsr's native promotion. They are not the everyday
+entry point.
+
+Every `ext_` anchor MUST open its docstring with this admonition, placed
+immediately after the one-line title and before the prose:
+
+```rust
+/// <div class="warning">
+///
+/// **Type Promotion Extension**
+///
+/// This `ext_` variant exists for parity with the Python Array API standard's
+/// type-promotion rules. In ordinary Rust usage, prefer [`<base>`] (rstsr's
+/// native promotion) instead; reach for `ext_` only when matching Array-API
+/// promotion is required.
+///
+/// </div>
+```
+
+- `<base>` is the non-`ext_` counterpart (`[`matmul`]` for `[`ext_matmul`]`).
+- The base anchor's `# See also > ## Variants of this function` SHOULD list the
+  `ext_` form, and vice versa.
+
+The div header follows the §10 shape (`<div class="warning">`, blank `///` lines
+around the bold header).

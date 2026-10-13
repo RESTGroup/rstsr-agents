@@ -36,12 +36,19 @@ documented standalone.
 
 **Overload**:
 One tuple-argument form of an overloaded function (`rt::asarray((vec, shape,
-&device))` vs `rt::asarray(vec)`). Enumerated exhaustively in the anchor's
-Overloads Table; examples cover only typical forms.
+&device))` vs `rt::asarray(vec)`), or one input kind of a parameter-level
+generic argument (`axis: impl Into<AxesIndex<isize>>` accepts `None`, an
+integer, a tuple, a list). Enumerated in the anchor's Overloads Table and
+exemplified in its Overload List.
 
 **Overloads Table**:
-The `# Overloads Table` docstring section listing every overload, grouped by
-output type (`asarray` is the exemplar).
+The `# Overloads Table` docstring section listing every overload signature,
+grouped by output type (`asarray` is the exemplar).
+
+**Overload List**:
+The `# Overload List` docstring section every overloaded anchor carries right
+after `# Examples`: a bullet list of the overload forms, then one minimal tested
+snippet covering them.
 
 ### Tiers
 
