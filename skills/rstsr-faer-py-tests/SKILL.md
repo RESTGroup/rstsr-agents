@@ -5,8 +5,11 @@ description: Test rstsr-faer-py — the pyo3 package exposing rstsr's DeviceFaer
 
 # Testing rstsr-faer-py against the array API conformance suite
 
-`rstsr-faer-py` lives in the rstsr repository at `crates-interop/rstsr-faer-py`
-(pyo3 + maturin, namespace `rstsr_faer.api`, standard 2025.12). Grading uses
+`rstsr-faer-py` lives in the rstsr repository under
+`crates-interop/rstsr-faer-py/` — a group of crates: `binding/` is the pyo3
+cdylib the wheel is built from (`maturin`'s working directory), and the
+`core` / `ops-*` / `create` / `index` / `linalg` crates carry the surface
+(namespace `rstsr_faer.api`, standard 2025.12). Grading uses
 the official data-apis `array-api-tests` suite pinned to `6c0b59f` (spec
 submodule `5f847a3`) — the same pins as the NumPy 2.5.1 baseline, so numbers
 compare directly. This skill is self-contained: its `scripts/` carry the
@@ -29,9 +32,11 @@ derandomized; counts wobble ±2 from hypothesis DB replay):
 The rstsr checkout pins its own nightly toolchain via `rust-toolchain.toml`.
 
 ```bash
-cd <rstsr-checkout>/crates-interop/rstsr-faer-py
+cd <rstsr-checkout>/crates-interop/rstsr-faer-py/binding
 cargo build -p rstsr-faer-py --release                  # compile check
-maturin build --release -i "$TEST_PY" -o /tmp/wheels   # maturin must run from the CRATE dir, not the workspace root
+# dev iterations: opt-level 0 (see the timing table below)
+CARGO_PROFILE_RELEASE_DEBUG=0 CARGO_PROFILE_RELEASE_OPT_LEVEL=0 \
+  maturin build --release -i "$TEST_PY" -o /tmp/wheels  # maturin must run from the CRATE dir, not the workspace root
 "$TEST_PY" -m pip install --force-reinstall --no-deps /tmp/wheels/rstsr_faer_py-*.whl
 ```
 
@@ -39,24 +44,26 @@ Python-side edits (`python/rstsr_faer/*.py`) need no rebuild — copy the
 tree over the installed package in site-packages. Rust-side edits need the
 maturin rebuild (see below for what it costs).
 
-### Build time and opt-level (measured 2026-10-05)
+### Build time and opt-level (re-measured 2026-10-14, 16-core box, `CARGO_BUILD_JOBS=16`)
 
-A shim-crate edit costs a full release rebuild of the crate: **~6 min** at
-the default opt-level since the W2 elementwise pass (before it: ~30 s). The
-cost is the pair-dispatch tables (`dispatch_bin_promote!` ~270 arms +
-`dispatch_bin_promote_eq!` ~170 in `any_tensor.rs`, expanded once per op
-wrapper) — thousands of monomorphizations in one crate, dominated by LLVM
-codegen; even opt-level 0 spends ~1m14s.
+The compile cost is still the dispatch tables (`dispatch_bin_promote!` ~270
+arms + `dispatch_bin_promote_eq!` ~170 in `any_tensor.rs`, expanded once per
+op wrapper), but they no longer land in one `rustc`: the shim is split into
+a `core` crate holding the tables plus per-domain `ops-*` / `create` /
+`index` / `linalg` crates that each expand a slice, so the work is parallel
+and per-crate.
 
-| opt-level | shim-only rebuild | full build (deps + shim) | full suite time |
-| --- | --- | --- | --- |
-| 0 | 1m14s | 1m26s | 60 s |
-| 2 | 5m47s | 6m08s | 59 s |
-| 3 | 6m05s | ≥6m19s | 59 s |
+| edit | opt-level 0 | opt-level 3 (default) |
+| --- | --- | --- |
+| a dispatch table (`core/src/any_tensor.rs` → every shim crate) | 65 s | 179 s |
+| one domain crate (e.g. `ops-arith/src/arith.rs`) | 54 s | — |
+
+The cdylib link and maturin's wheel assembly dominate both rows; a
+from-scratch build (all deps + shim) is a few minutes, deps included.
 
 The suite is hypothesis-dominated (arrays ≤ 1024 elements), so the opt-level
 is free on the test side: **use `CARGO_PROFILE_RELEASE_OPT_LEVEL=0` for dev
-iterations** (~5× faster rebuilds, identical suite verdicts) and keep
+iterations** (faster rebuilds, identical suite verdicts) and keep
 opt-level 3 for the wheel whose numbers get recorded. Runtime cost of opt 0
 on real compute (1e6 f64, best-of-blocks): add 0.79 ms / exp 3.2 ms vs
 0.14 / 0.55 ms at opt 2/3 (numpy reference: 0.16 / 0.38 ms) — so opt 0 is
@@ -73,11 +80,13 @@ Dropping `--release` to get an "opt-0 wheel" silently turns on
 release profile, so a 10-node red shift is a build-profile smell, not a
 regression.
 
-**Memory**: a default `--release` (opt-level 3) cdylib link can be OOM-killed on a
-loaded machine (`rustc … (signal: 9, SIGKILL)` with no rustc diagnostic, cargo
-building with `nproc` jobs, swap exhausted). Memory-lean build that keeps the
-verdicts identical:
-`CARGO_BUILD_JOBS=2 CARGO_PROFILE_RELEASE_DEBUG=0 CARGO_PROFILE_RELEASE_OPT_LEVEL=0 maturin build --release -i "$TEST_PY" -o /tmp/wheels`.
+**Memory**: no longer a constraint (2026-10-14). Before the crate split one
+`rustc` monomorphizing the whole dispatch surface needed ~25 GB, and a
+default `--release` cdylib link could be OOM-killed on a loaded machine
+(`rustc … (signal: 9, SIGKILL)`, cargo building with `nproc` jobs, swap
+exhausted). Now the largest `rustc` peaks at ~4 GB and a full build stays
+under ~7 GB, so no job cap is needed — `CARGO_BUILD_JOBS=16` (one per core)
+is fine. The verdicts do not depend on the job count.
 
 ## 2. One-time suite setup
 
