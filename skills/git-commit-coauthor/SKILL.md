@@ -21,6 +21,10 @@ Co-authored-by: Model Name <Model Email>
 - Subject better start with the main affected crate, e.g. `rstsr-core: add reshape function`, or better `rstsr-core (fix): correct bug in reshape function`. If many crates are non-trivially affected, just start with `fix/refactor/feat/...` is also okay. This affects non-doc crates.
 - Prefer details in the body.
 - The two co-authors are the **agent** and the **model**, with **no blank line between** them, after one blank line following the body.
+- Never amend a commit automatically (e.g. to fix style or fold in forgotten
+  changes); only amend when the human user explicitly requested it. If the
+  commit is already pushed, a follow-up commit is the default fix; force-pushing
+  always requires the human user's explicit approval first.
 
 ## Resolve agent and model
 

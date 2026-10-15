@@ -11,7 +11,9 @@ description: Write RSTSR pull-request titles and bodies in the house style - a c
    `git push -u <fork> <branch>`. The fork name is per-developer (record
    yours in `AGENTS.local.md`; e.g. `ajz34` on the maintainer's machine); if
    the remote is missing, `git remote add <fork> git@github.com:<you>/<repo>.git`
-   once.
+   once. Never amend or rebase a commit that is already pushed, and never
+   force-push, unless the human user explicitly asked for that; after a push,
+   fix mistakes with a follow-up commit instead.
 2. Read the branch as a whole — `git log --oneline <base>..HEAD` and
    `git diff --stat <base>...HEAD` — and write from the diff, not from memory.
 3. Draft the title and the two body parts below.
