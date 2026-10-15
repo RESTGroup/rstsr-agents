@@ -55,8 +55,8 @@ paths, workspace directories) alike — and state the capability, not the ticket
 
 Use the CHANGELOG category headings, in this order, dropping empty ones:
 
-`API breaking changes` — `New features` — `Enhancement` — `Behavior change` —
-`Bug Fix` — `Dev infrastructure` — plus the qualifier category
+`API breaking changes` — `New features` — `Enhancement` — `Documentation` —
+`Behavior change` — `Bug Fix` — `Dev infrastructure` — plus the qualifier category
 `API breaking changes (user should not feel that)` for breaks only trait
 implementors or rare paths can hit.
 
@@ -68,7 +68,10 @@ Category fit:
 
 - `API breaking changes` — a break users feel; put the migration step in the bullet.
 - `New features` — an additive capability.
-- `Enhancement` — performance, quality, docs, refactor.
+- `Enhancement` — performance, quality, refactor.
+- `Documentation` — only when documentation is the substance of this change (a
+  doc-page, cheat-sheet, or docstring campaign); incidental docstring updates
+  riding along with a feature or fix belong to that feature/fix's section.
 - `Behavior change` — an observable change that is not a defect fix.
 - `Bug Fix` — a fixed defect (regression, soundness, correctness).
 - `Dev infrastructure` — CI, tooling, agent workflow, tracking.
